@@ -1,0 +1,31 @@
+name:                abattoir
+version:             0.1.0.0
+
+synopsis:            lambda calculus repl
+homepage:            https://github.com/hughfdjackson/abattoir
+license:             MIT
+license-file:        LICENSE
+author:              Hugh FD Jackson
+maintainer:          hughfdjackson@googlemail.com
+
+category:            Language
+build-type:          Simple
+cabal-version:       >=1.10
+
+
+executable abattoir
+  hs-source-dirs:      src
+  main-is:             Main.hs
+  build-depends:       base >=4.7 && <4.8,
+                       parsec == 3.1.7
+  
+  default-language:    Haskell2010
+  
+Test-Suite spec
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test,src
+  ghc-options:         -Wall
+  main-is:             Main.hs
+  build-depends:       base, 
+                       hspec == 2.0.1
+  default-language:    Haskell2010
