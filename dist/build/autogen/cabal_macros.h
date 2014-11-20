@@ -7,12 +7,26 @@
   (major1) == 4 && (major2) <  7 || \
   (major1) == 4 && (major2) == 7 && (minor) <= 0)
 
+/* package containers-0.5.5.1 */
+#define VERSION_containers "0.5.5.1"
+#define MIN_VERSION_containers(major1,major2,minor) (\
+  (major1) <  0 || \
+  (major1) == 0 && (major2) <  5 || \
+  (major1) == 0 && (major2) == 5 && (minor) <= 5)
+
 /* package parsec-3.1.7 */
 #define VERSION_parsec "3.1.7"
 #define MIN_VERSION_parsec(major1,major2,minor) (\
   (major1) <  3 || \
   (major1) == 3 && (major2) <  1 || \
   (major1) == 3 && (major2) == 1 && (minor) <= 7)
+
+/* package QuickCheck-2.6 */
+#define VERSION_QuickCheck "2.6"
+#define MIN_VERSION_QuickCheck(major1,major2,minor) (\
+  (major1) <  2 || \
+  (major1) == 2 && (major2) <  6 || \
+  (major1) == 2 && (major2) == 6 && (minor) <= 0)
 
 /* package hspec-2.0.1 */
 #define VERSION_hspec "2.0.1"

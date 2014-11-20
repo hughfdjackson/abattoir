@@ -1,35 +1,54 @@
 module LambdaSpec (specs) where
 
 import Test.Hspec
+import Test.QuickCheck
 import Lambda
+
+names :: Gen Char
+names = elements ['a'..'z']
+
+instance Arbitrary Expr where
+  arbitrary = do
+    n <- choose (0, 2) :: Gen Int
+    case n of
+      0 -> do name <- names
+              return $ v name
+              
+      1 -> do name <- names
+              expr <- arbitrary
+              return $ l name expr
+
+      2 -> do expr  <- arbitrary
+              expr' <- arbitrary
+              name  <- names
+              return $ ap (l name expr) expr'
 
 specs :: Spec
 specs = describe "Lambda" $ do
-  describe "show" $ do 
-    it "should show Vars" $ do
-      show (Var "x") `shouldBe` "x"
+  -- describe "show" $ do 
+    -- it "should show vars" $ do
+    --   show (v 'x') `shouldBe` "x"
 
-    it "should show Appliation" $ do
-      show (Application (Var "x") (Var "y")) `shouldBe` "x y"
+    -- it "should show appliation" $ do
+    --   show (ap (v 'x') (v 'y')) `shouldBe` "xy"
 
-    it "should show Abstraction" $ do
-      show (Abstraction "x" (Var "y")) `shouldBe` "(λx.y)"
+    -- it "should show Abstraction" $ do
+    --   show (l 'x' (v 'y')) `shouldBe` "(λx.y)"
+  describe "reduced form" $ do
+    it "should tell whether a form is fulled reduced" $ do
+      isReducedForm (ap (l 'x' (v 'x')) (v 'y')) `shouldBe` False
+      isReducedForm (l 'x' (ap (v 'x') (v 'y'))) `shouldBe` True
+      isReducedForm (v 'x')                      `shouldBe` True
 
   describe "eval" $ do
-    it "should reduce vars no further" $ do
-      let term =  Var "x"
-      eval term `shouldBe` term
+    it "should eval vars to themselves" $ do
+      eval (v 'x') `shouldBe` (v 'x')
 
-    it "should reduce Abstraction no further" $ do
-      let term = (Abstraction "x" (Var "y"))
-      eval term `shouldBe` term
+    it "should eval abstraction to itself" $ do
+      eval (l 'x' (v 'y')) `shouldBe` (l 'x' (v 'y'))
 
-    it "should reduce Application" $ do
-      let c = (Abstraction "x" (Abstraction "y" (Var "x")))
-      let term = (Application c (Var "z"))
-      eval term `shouldBe` (Abstraction "y" (Var "z"))
+    it "should evaluate identity fn to obey identity law" $ property $ \expr ->
+      isReducedForm expr ==> eval (ap (l 'x' (v 'x')) expr) == (expr :: Expr)
 
-    it "should reduce Application, respecting shadowing" $ do 
-      let term = (Application (Abstraction "x" (Abstraction "x" (Var "x"))) (Var "z"))
-      eval term `shouldBe` (Abstraction "x" (Var "x"))
-
+    it "should evaluate constant fn to obey constant law" $ property $ \expr ->
+      isReducedForm expr ==> eval (ap (ap (l 'x' (l 'y' (v 'x'))) expr) (v 'z')) == (expr :: Expr)

@@ -1,34 +1,71 @@
 module Lambda (
-  Lambda(..),
-  eval
+  Expr(..),
+  Name,
+  eval,
+  isReducedForm,
+  v, l, ap
 ) where
 
-data Lambda = Var Name
-            | Abstraction Name Lambda
-            | Application Lambda Lambda
-            deriving (Eq)
-                     
-instance Show Lambda where
-  show (Var name)         = name
-  show (Abstraction n l)  = "(λ" ++ n ++ "." ++ show l ++ ")"
-  show (Application l l') = show l ++ " " ++ show l'
+import Prelude hiding (lookup)
+import Data.Map (Map, empty, insert, lookup)
 
-type Name = String
+type Name = Char
 
--- evaluation - i.e. bete reduction
-eval :: Lambda -> Lambda
-eval term@(Var _)  = term
-eval term@(Abstraction _ _) = term
-eval (Application (Abstraction n l) v) = substitute n l v
+data Expr = V Name
+          | L Name Expr Env 
+          | Ap Expr Expr
+          deriving (Eq, Show)
 
--- applyWithName :: Name -> Lambda -> Lambda -> Lambda
--- applyWithName name a@(Abstraction name' l) v = if name == name' then a
---                                                else substitute name l v
+type Env = Map Name Expr
 
-substitute name (Var name') v = if name' == name then v else Var name'
-substitute name a@(Abstraction name' l) v  =  if name' == name then a else Abstraction name' (substitute name l v)
-substitute name (Application l l') v       = Application (substitute name l v) (substitute name l' v)
+emptyEnv = empty
 
--- (λx.(λy.x)) z
--- (λz.(λy.z))
--- (λy.z)
+v name = V name
+l name expr = L name expr emptyEnv
+ap expr expr' = Ap expr expr'
+
+-- instance Show Expr where
+--   show (V name)        = toString name
+--   show (Ap expr expr') = show expr ++ show expr'
+--   show (L name expr)   = "(λ" ++ toString name ++ "." ++ show expr ++ ")"
+-- toString :: Char -> String
+-- toString n = [n]
+
+-- evaluation
+eval :: Expr -> Expr
+eval = evalWithEnv emptyEnv
+
+-- (ap (lx.(ly.x)) t) = [x/z] = (ly.x {env: x=z})
+
+-- (ap (ap (lx.(ly.x)) a) b)
+--   = [x/a] = (ap (ly.x {env: x=a}) b)
+--   = [b/y] = (x {env: x=a,y=b})
+--   = a
+
+-- (ap (lx.x) (ap (lx.x) (lx.x)))
+-- (ap (lx.x) (lx.x))
+-- (lx.x)
+
+-- (lx.x)
+-- x
+evalStep :: Env -> Expr -> Expr
+evalStep env l@(L _ _ _) = l
+evalStep env l@(L _ _ _) = l
+
+evalWithEnv :: Env -> Expr -> Expr
+evalWithEnv env (Ap expr expr')  = let (L name body env') = evalWithEnv env expr
+                                       a                  = evalWithEnv env expr'
+                                       closureEnv         = insert name a env'
+                                   in evalWithEnv closureEnv body
+evalWithEnv env term@(V name) = lookup name env `getOrElse` term
+evalWithEnv env term@(L name body env') = L name body env
+  
+isReducedForm :: Expr -> Bool
+isReducedForm (Ap _ _) = False
+isReducedForm _        = True
+
+
+getOrElse :: Maybe a -> a -> a
+(Just a) `getOrElse` b = a
+Nothing `getOrElse`  b = b
+  
