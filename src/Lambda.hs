@@ -3,11 +3,14 @@ module Lambda (
   Name,
   eval,
   isReducedForm,
-  v, l, ap
+  v, l, ap,
+  combI, combK,
+  showExpr,
+  isInfinitelyRecursive
 ) where
 
 import Prelude hiding (lookup)
-import Data.Map (Map, empty, insert, lookup)
+import Data.Map (Map, empty, insert, lookup, fromList)
 
 type Name = Char
 
@@ -17,40 +20,26 @@ data Expr = V Name
           deriving (Eq, Show)
 
 type Env = Map Name Expr
-
 emptyEnv = empty
+isEmptyEnv e = e == emptyEnv
+env list = fromList list
+
 
 v name = V name
 l name expr = L name expr emptyEnv
 ap expr expr' = Ap expr expr'
 
--- instance Show Expr where
---   show (V name)        = toString name
---   show (Ap expr expr') = show expr ++ show expr'
---   show (L name expr)   = "(λ" ++ toString name ++ "." ++ show expr ++ ")"
--- toString :: Char -> String
--- toString n = [n]
+showExpr :: Expr -> String
+showExpr expr = case expr of
+  (V name)        -> toString name
+  (Ap expr expr') -> showExpr expr ++ showExpr expr'
+  (L name expr env)   -> "(λ" ++ toString name ++ "." ++ showExpr expr ++ ")"
+  where toString n  = [n]
+        showEnv env = if isEmptyEnv env then ""
+                      else "env=" ++ show env
 
--- evaluation
 eval :: Expr -> Expr
 eval = evalWithEnv emptyEnv
-
--- (ap (lx.(ly.x)) t) = [x/z] = (ly.x {env: x=z})
-
--- (ap (ap (lx.(ly.x)) a) b)
---   = [x/a] = (ap (ly.x {env: x=a}) b)
---   = [b/y] = (x {env: x=a,y=b})
---   = a
-
--- (ap (lx.x) (ap (lx.x) (lx.x)))
--- (ap (lx.x) (lx.x))
--- (lx.x)
-
--- (lx.x)
--- x
-evalStep :: Env -> Expr -> Expr
-evalStep env l@(L _ _ _) = l
-evalStep env l@(L _ _ _) = l
 
 evalWithEnv :: Env -> Expr -> Expr
 evalWithEnv env (Ap expr expr')  = let (L name body env') = evalWithEnv env expr
@@ -64,8 +53,13 @@ isReducedForm :: Expr -> Bool
 isReducedForm (Ap _ _) = False
 isReducedForm _        = True
 
-
 getOrElse :: Maybe a -> a -> a
 (Just a) `getOrElse` b = a
 Nothing `getOrElse`  b = b
+
+isInfinitelyRecursive :: Expr -> Bool
+isInfinitelyRecursive expr = undefined
   
+-- combinators
+combK = (l 'x' (l 'y' (v 'x')))
+combI = (l 'x' (v 'x'))
