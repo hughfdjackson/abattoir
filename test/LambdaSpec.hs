@@ -35,8 +35,11 @@ specs = describe "Lambda" $ do
     it "should show Abstraction" $ do
       showExpr (l 'x' (v 'y')) `shouldBe` "(λx.y)"
 
-    -- it "should show an L with env" $ do
-    --   showExpr (L 'x' (v 'y') (env [('y', V 'z')]) `shouldBe` "(λx.y{y=z})
+    it "should show an L with env" $ do
+      showExpr (L 'x' (v 'y') (env [('y', V 'z')])) `shouldBe` "(λx.y{y=z})"
+
+    it "should show an L with an empty env just by skipping the env" $ do
+      showExpr (L 'x' (v 'y') (env [])) `shouldBe` "(λx.y)"
       
   describe "reduced form" $ do
     it "should tell whether a form is fulled reduced" $ do

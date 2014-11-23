@@ -3,14 +3,16 @@ module Lambda (
   Name,
   eval,
   isReducedForm,
-  v, l, ap,
+  v, l, ap, env,
   combI, combK,
   showExpr,
   isInfinitelyRecursive
 ) where
 
 import Prelude hiding (lookup)
-import Data.Map (Map, empty, insert, lookup, fromList)
+import Data.Map (Map, empty, insert, lookup, fromList, toList)
+import Data.List (intercalate)
+import Data.Functor ((<$>))
 
 type Name = Char
 
@@ -19,24 +21,37 @@ data Expr = V Name
           | Ap Expr Expr
           deriving (Eq, Show)
 
-type Env = Map Name Expr
-emptyEnv = empty
-isEmptyEnv e = e == emptyEnv
-env list = fromList list
-
-
 v name = V name
 l name expr = L name expr emptyEnv
 ap expr expr' = Ap expr expr'
 
 showExpr :: Expr -> String
 showExpr expr = case expr of
-  (V name)        -> toString name
+  (V name)        -> showName name
   (Ap expr expr') -> showExpr expr ++ showExpr expr'
-  (L name expr env)   -> "(λ" ++ toString name ++ "." ++ showExpr expr ++ ")"
-  where toString n  = [n]
-        showEnv env = if isEmptyEnv env then ""
-                      else "env=" ++ show env
+  (L name expr env)   -> "(λ" ++ showName name ++ "." ++ showExpr expr ++ showEnv env ++ ")"
+
+
+showName :: Char -> String
+showName = (: [])
+
+-- Environment 
+type Env = Map Name Expr
+
+emptyEnv :: Env
+emptyEnv = empty
+
+isEmptyEnv :: Env -> Bool
+isEmptyEnv e = e == emptyEnv
+
+env :: [(Name,Expr)] -> Env
+env list = fromList list
+
+showEnv :: Env -> String
+showEnv env
+  | isEmptyEnv env = ""
+  | otherwise      = "{" ++ (intercalate "," (formatPairs <$> (toList env))) ++ "}"
+  where formatPairs (name,expr) = showName name ++ "=" ++ showExpr expr
 
 eval :: Expr -> Expr
 eval = evalWithEnv emptyEnv
