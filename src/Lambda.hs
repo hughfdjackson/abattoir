@@ -5,14 +5,14 @@ module Lambda (
   isReducedForm,
   v, l, ap, env,
   combI, combK,
-  showExpr,
-  isInfinitelyRecursive
+  showExpr
 ) where
 
 import Prelude hiding (lookup)
 import Data.Map (Map, empty, insert, lookup, fromList, toList)
 import Data.List (intercalate)
 import Data.Functor ((<$>))
+import Data.Maybe (fromMaybe)
 
 type Name = Char
 
@@ -69,12 +69,8 @@ isReducedForm (Ap _ _) = False
 isReducedForm _        = True
 
 getOrElse :: Maybe a -> a -> a
-(Just a) `getOrElse` b = a
-Nothing `getOrElse`  b = b
+getOrElse = flip fromMaybe
 
-isInfinitelyRecursive :: Expr -> Bool
-isInfinitelyRecursive expr = undefined
-  
 -- combinators
 combK = (l 'x' (l 'y' (v 'x')))
 combI = (l 'x' (v 'x'))

@@ -22,7 +22,7 @@ instance Arbitrary Expr where
               expr' <- arbitrary
               name  <- names
               return $ ap (l name expr) expr'
-
+  
 specs :: Spec
 specs = describe "Lambda" $ do
   describe "showExpr" $ do 
@@ -53,24 +53,9 @@ specs = describe "Lambda" $ do
 
     it "should eval abstraction to itself" $ do
       eval (l 'x' (v 'y')) `shouldBe` (l 'x' (v 'y'))
-
-    it "should evaluate identity fn to obey identity law" $ property $ \expr ->
-      isReducedForm expr ==> eval (ap combI expr) == (expr :: Expr)
-
-    it "should evaluate constant fn to obey constant law" $ property $ \expr ->
-      isReducedForm expr ==> eval (ap (ap combK expr) (v 'z')) == (expr :: Expr)
-
-  -- describe "evalStep" $ do
-  --   it "should eval a single step of the reduction of an expression" $ property $ \expr -> 
-  --     isReducedForm expr ==> evalStep (ap (ap (l 'x' (l 'y' (v 'x'))) expr) (v 'z')) == (ap (L 'y' (v 'x') (env [('x', expr)])))
-
-  -- describe "isInfinitelyRecurisve" $ do
-  --   it "should return true for an expression that's infinitely recursive" $ do
-  --     let selfApply = (l 'x' (ap (v 'x') (v 'x')))
-  --     let quine = (ap selfApply selfApply)
-  --     isInfinitelyRecursive quine `shouldBe` True
-
-  --   it "should return false for any non-ap expression" $ property $ \expr -> 
-  --     isReducedForm ==> isInfinitelyRecursive expr `shouldBe` False
-
       
+    it "should evaluate identity fn to obey identity law" $ property $ \expr ->
+      isReducedForm expr ==> eval (ap combI expr) === (expr :: Expr)
+      
+    it "should evaluate constant fn to obey constant law" $ property $ \expr ->
+      isReducedForm expr ==> eval (ap (ap combK expr ) (v 'z')) === (expr :: Expr)
