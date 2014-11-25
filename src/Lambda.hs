@@ -13,10 +13,11 @@ module Lambda (
 
 import           Data.Either
 import           Data.List
+import           Data.Map        (Map, empty, fromList, insert, lookup, toList)
 import           Data.Maybe
-import           Data.Map     (Map, empty, fromList, insert, lookup, toList)
-import qualified Data.Set     as Set
-import           Prelude      hiding (lookup)
+import qualified Data.Set        as Set
+import           Prelude         hiding (lookup)
+import           Test.QuickCheck (Arbitrary, Gen, arbitrary, choose, elements)
 
 type Name = Char
 
@@ -27,10 +28,30 @@ data Expr = V Name
 
 instance Show Expr where
   show expr = case expr of
-    (V name)       -> showName name
-    (Ap expr' arg) -> show expr' ++ show arg
-    (L name body)  -> "(λ" ++ showName name ++ "." ++ show body ++ ")"
+    (V name)                -> showName name
+    (Ap expr' ap@(Ap _ _))  -> show expr' ++ "(" ++ show ap ++ ")"
+    (Ap expr' arg)          -> show expr' ++ show arg
+    (L name body)           -> "(λ" ++ showName name ++ "." ++ show body ++ ")"
     where showName n = [n]
+
+
+instance Arbitrary Expr where
+  arbitrary = do
+    n <- choose (0, 2) :: Gen Int
+    case n of
+      0 -> do name <- possibleNames
+              return $ V name
+
+      1 -> do name <- possibleNames
+              expr <- arbitrary
+              return $ L name expr
+
+      2 -> do expr  <- arbitrary
+              expr' <- arbitrary
+              name  <- possibleNames
+              return $ Ap (L name expr) expr'
+    where possibleNames = elements ['a'..'z']
+
 
 
 -- Combinators

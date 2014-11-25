@@ -6,24 +6,6 @@ import           Lambda
 import           Test.Hspec
 import           Test.QuickCheck
 
-possibleNames :: Gen Char
-possibleNames = elements ['a'..'z']
-
-instance Arbitrary Expr where
-  arbitrary = do
-    n <- choose (0, 2) :: Gen Int
-    case n of
-      0 -> do name <- possibleNames
-              return $ V name
-
-      1 -> do name <- possibleNames
-              expr <- arbitrary
-              return $ L name expr
-
-      2 -> do expr  <- arbitrary
-              expr' <- arbitrary
-              name  <- possibleNames
-              return $ Ap (L name expr) expr'
 
 specs :: Spec
 specs = describe "Lambda" $ do
@@ -31,8 +13,11 @@ specs = describe "Lambda" $ do
     it "should show vars" $
       show (V 'x') `shouldBe` "x"
 
-    it "should show appliation" $
+    it "should show application" $
       show (Ap (V 'x') (V 'y')) `shouldBe` "xy"
+
+    it "should clarify right application with parens" $
+      show (Ap (V 'x') (Ap (V 'y') (V 'x'))) `shouldBe` "x(yx)"
 
     it "should show Abstraction" $
       show (L 'x' (V 'y')) `shouldBe` "(λx.y)"
