@@ -1,10 +1,10 @@
 module LambdaSpec (specs) where
 
-import Test.Hspec
-import Test.QuickCheck
-import Lambda
-import Data.Set as Set
-import Data.Either (Either(..))
+import           Data.Either     ()
+import           Data.Set        as Set
+import           Lambda
+import           Test.Hspec
+import           Test.QuickCheck
 
 possibleNames :: Gen Char
 possibleNames = elements ['a'..'z']
@@ -14,90 +14,84 @@ instance Arbitrary Expr where
     n <- choose (0, 2) :: Gen Int
     case n of
       0 -> do name <- possibleNames
-              return $ v name
-              
+              return $ V name
+
       1 -> do name <- possibleNames
               expr <- arbitrary
-              return $ l name expr
+              return $ L name expr
 
       2 -> do expr  <- arbitrary
               expr' <- arbitrary
               name  <- possibleNames
-              return $ ap (l name expr) expr'
-  
+              return $ Ap (L name expr) expr'
+
 specs :: Spec
 specs = describe "Lambda" $ do
-  describe "showExpr" $ do 
-    it "should show vars" $ do
-      showExpr (v 'x') `shouldBe` "x"
+  describe "show" $ do
+    it "should show vars" $
+      show (V 'x') `shouldBe` "x"
 
-    it "should show appliation" $ do
-      showExpr (ap (v 'x') (v 'y')) `shouldBe` "xy"
+    it "should show appliation" $
+      show (Ap (V 'x') (V 'y')) `shouldBe` "xy"
 
-    it "should show Abstraction" $ do
-      showExpr (l 'x' (v 'y')) `shouldBe` "(λx.y)"
-
-  describe "isReducedForm" $ do
-    it "should tell whether a form is fulled reduced" $ do
-      isReducedForm (ap (l 'x' (v 'x')) (v 'y')) `shouldBe` False
-      isReducedForm (l 'x' (ap (v 'x') (v 'y'))) `shouldBe` True
-      isReducedForm (v 'x')                      `shouldBe` True
+    it "should show Abstraction" $
+      show (L 'x' (V 'y')) `shouldBe` "(λx.y)"
 
   describe "renameBoundTo" $ do
     it "should rename to the next alphabetical letter *not* bound in the current expression" $ do
       let xToA =  'x' `renameBoundTo` 'a'
-      let expr  = l 'x' (l 'y' (l 'z' (ap (ap (v 'x') (v 'y')) (v 'z'))))
-            
-      xToA expr `shouldBe` l 'a' (l 'y' (l 'z' (ap (ap (v 'a') (v 'y')) (v 'z'))))
+      let expr  = L 'x' (L 'y' (L 'z' (Ap (Ap (V 'x') (V 'y')) (V 'z'))))
+
+      xToA expr `shouldBe` L 'a' (L 'y' (L 'z' (Ap (Ap (V 'a') (V 'y')) (V 'z'))))
 
     it "It should not rename a free variable" $ do
       let xToA =  'x' `renameBoundTo` 'a'
-      let expr = l 'y' (ap (l 'x' (v 'x'))  (v 'x'))
+      let expr = L 'y' (Ap (L 'x' (V 'x'))  (V 'x'))
 
-      xToA expr `shouldBe` l 'y' (ap (l 'a' (v 'a')) (v 'x'))
+      xToA expr `shouldBe` L 'y' (Ap (L 'a' (V 'a')) (V 'x'))
 
-  describe "renameBoundWithout" $ do
-    it "should renameBoundTo the first available name in the alphabet given an empty blacklist" $ do 
-      let expr  = l 'x' (l 'y' (l 'z' (ap (ap (v 'x') (v 'y')) (v 'z'))))
-      let expr' = l 'y' (ap (l 'x' (v 'x'))  (v 'x'))
+  describe "renameBoundWithout" $
+    it "should renameBoundTo the first available name in the alphabet given an empty blacklist" $ do
+      let expr  = L 'x' (L 'y' (L 'z' (Ap (Ap (V 'x') (V 'y')) (V 'z'))))
+      let expr' = L 'y' (Ap (L 'x' (V 'x'))  (V 'x'))
 
-      renameBoundWithout Set.empty 'x' expr  `shouldBe` l 'a' (l 'y' (l 'z' (ap (ap (v 'a') (v 'y')) (v 'z'))))
-      renameBoundWithout Set.empty 'x' expr' `shouldBe` l 'y' (ap (l 'a' (v 'a')) (v 'x'))
+      renameBoundWithout Set.empty 'x' expr  `shouldBe` L 'a' (L 'y' (L 'z' (Ap (Ap (V 'a') (V 'y')) (V 'z'))))
+      renameBoundWithout Set.empty 'x' expr' `shouldBe` L 'y' (Ap (L 'a' (V 'a')) (V 'x'))
 
-  describe "boundNames" $ do
+  describe "boundNames" $
     it "should return all bound names" $ do
-      boundNames (l 'x' (ap (v 'y') (v 'x'))) `shouldBe` Set.singleton 'x'
-      boundNames (l 'x' (l 'y' (v 'x'))) `shouldBe` Set.singleton 'x'
-      boundNames (v 'y') `shouldBe` Set.empty
+      boundNames (L 'x' (Ap (V 'y') (V 'x'))) `shouldBe` Set.singleton 'x'
+      boundNames (L 'x' (L 'y' (V 'x'))) `shouldBe` Set.singleton 'x'
+      boundNames (V 'y') `shouldBe` Set.empty
 
-  describe "freeNames" $ do
+  describe "freeNames" $
     it "should return all free names" $ do
-       freeNames (l 'x' (ap (v 'y') (v 'x'))) `shouldBe` Set.singleton 'y'
-       freeNames (v 'y') `shouldBe` Set.singleton 'y'
-       freeNames (ap (v 'y') (v 'x')) `shouldBe` Set.fromList ['y', 'x']
+       freeNames (L 'x' (Ap (V 'y') (V 'x'))) `shouldBe` Set.singleton 'y'
+       freeNames (V 'y') `shouldBe` Set.singleton 'y'
+       freeNames (Ap (V 'y') (V 'x')) `shouldBe` Set.fromList ['y', 'x']
 
-  describe "names" $ do
+  describe "names" $
     it "should return full list of all names, free or bound" $ do
-       names (l 'x' (ap (v 'y') (v 'x'))) `shouldBe` Set.fromList ['y', 'x']
-       names (v 'y') `shouldBe` Set.singleton 'y'
-       names (ap (v 'y') (v 'x')) `shouldBe` Set.fromList ['y', 'x']
-      
+       names (L 'x' (Ap (V 'y') (V 'x'))) `shouldBe` Set.fromList "yx"
+       names (V 'y') `shouldBe` Set.singleton 'y'
+       names (Ap (V 'y') (V 'x')) `shouldBe` Set.fromList "yx"
+
   describe "substitute" $ do
     it "should substitute a free variable in an expression" $ do
-      let expr = l 'x' (ap (v 'y') (v 'x'))
-      substitute 'y' (v 'z') expr `shouldBe` l 'x' (ap (v 'z') (v 'x'))
+      let expr = L 'x' (Ap (V 'y') (V 'x'))
+      substitute 'y' (V 'z') expr `shouldBe` L 'x' (Ap (V 'z') (V 'x'))
 
     it "should re-name variables in by using the same logic as renameBound" $ do
-      let expr = l 'x' (ap (v 'a') (v 'x'))
-      substitute 'a' (v 'x') expr `shouldBe` l 'b' (ap (v 'x') (v 'b'))
+      let expr = L 'x' (Ap (V 'a') (V 'x'))
+      substitute 'a' (V 'x') expr `shouldBe` L 'b' (Ap (V 'x') (V 'b'))
 
   describe "evaluate" $ do
-    it "should .. evaluate things!" $ do 
-      eval (ap (l 'x' (ap (v 'y') (v 'x'))) (v 'a')) `shouldBe` Right (ap (v 'y') (v 'a'))
-      eval (l 'x' (ap (v 'y') (v 'x'))) `shouldBe` Right (l 'x' (ap (v 'y') (v 'x')))
-      eval (v 'x') `shouldBe` Right (v 'x')
-      eval (ap combI combI) `shouldBe` Right combI
-      eval (ap (ap combK (v 'y')) (v 'x')) `shouldBe` Right (v 'y')
+    it "should .. evaluate things!" $ do
+      eval (Ap (L 'x' (Ap (V 'y') (V 'x'))) (V 'a')) `shouldBe` Right (Ap (V 'y') (V 'a'))
+      eval (L 'x' (Ap (V 'y') (V 'x'))) `shouldBe` Right (L 'x' (Ap (V 'y') (V 'x')))
+      eval (V 'x') `shouldBe` Right (V 'x')
+      eval (Ap combI combI) `shouldBe` Right combI
+      eval (Ap (Ap combK (V 'y')) (V 'x')) `shouldBe` Right (V 'y')
 
-    it "should fail if it tries to apply a variable" $ do 
-      eval (ap (v 'x') (v 'y')) `shouldBe` Left ("cannot apply " ++ show (v 'y') ++ " to variable (" ++ show (v 'x') ++ ")")
+    it "should fail if it tries to apply a variable" $
+      eval (Ap (V 'x') (V 'y')) `shouldBe` Left ("cannot apply " ++ show (V 'y') ++ " to variable (" ++ show (V 'x') ++ ")")
