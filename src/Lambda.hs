@@ -20,6 +20,7 @@ import Data.Map (Map, empty, insert, lookup, fromList, toList)
 import Data.List (intercalate, elemIndex)
 import Data.Functor ((<$>))
 import Data.Maybe (fromMaybe, listToMaybe, fromJust)
+import Data.Either (Either(..))
 import qualified Data.Set as Set
 
 type Name = Char
@@ -50,10 +51,13 @@ isReducedForm _        = True
 combK = (l 'x' (l 'y' (v 'x')))
 combI = (l 'x' (v 'x'))
 
-eval :: Expr -> Expr
-eval (Ap inner@(Ap _ _) expr) = eval (Ap (eval inner) expr)
-eval (Ap inner@(L name body) expr) = substitute name expr body
-eval x = x
+eval :: Expr -> Either String Expr
+eval (Ap inner@(Ap _ _) expr)      = do
+  evalledInner <- eval inner
+  eval (Ap evalledInner expr)
+eval (Ap inner@(L name body) expr) = return $ substitute name expr body
+eval (Ap v@(V _) expr)             = Left $ "cannot apply " ++ show expr ++ " to variable (" ++ show v ++ ")"
+eval x = return x
 
 substitute :: Name -> Expr -> Expr -> Expr
 substitute name arg expr = subIn cleanedExpr

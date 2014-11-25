@@ -4,6 +4,7 @@ import Test.Hspec
 import Test.QuickCheck
 import Lambda
 import Data.Set as Set
+import Data.Either (Either(..))
 
 possibleNames :: Gen Char
 possibleNames = elements ['a'..'z']
@@ -92,5 +93,11 @@ specs = describe "Lambda" $ do
 
   describe "evaluate" $ do
     it "should .. evaluate things!" $ do 
-      let expr = (ap (l 'x' (ap (v 'y') (v 'x'))) (v 'a'))
-      eval expr `shouldBe` (ap (v 'y') (v 'a'))
+      eval (ap (l 'x' (ap (v 'y') (v 'x'))) (v 'a')) `shouldBe` Right (ap (v 'y') (v 'a'))
+      eval (l 'x' (ap (v 'y') (v 'x'))) `shouldBe` Right (l 'x' (ap (v 'y') (v 'x')))
+      eval (v 'x') `shouldBe` Right (v 'x')
+      eval (ap combI combI) `shouldBe` Right combI
+      eval (ap (ap combK (v 'y')) (v 'x')) `shouldBe` Right (v 'y')
+
+    it "should fail if it tries to apply a variable" $ do 
+      eval (ap (v 'x') (v 'y')) `shouldBe` Left ("cannot apply " ++ show (v 'y') ++ " to variable (" ++ show (v 'x') ++ ")")
