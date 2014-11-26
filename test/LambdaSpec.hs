@@ -70,7 +70,7 @@ specs = describe "Lambda" $ do
       let expr = L 'x' (Ap (V 'a') (V 'x'))
       substitute 'a' (V 'x') expr `shouldBe` L 'b' (Ap (V 'x') (V 'b'))
 
-  describe "evaluate" $ do
+  describe "eval" $ do
     it "should .. evaluate things!" $ do
       eval (Ap (L 'x' (Ap (V 'y') (V 'x'))) (V 'a')) `shouldBe` Right (Ap (V 'y') (V 'a'))
       eval (L 'x' (Ap (V 'y') (V 'x'))) `shouldBe` Right (L 'x' (Ap (V 'y') (V 'x')))
@@ -80,3 +80,14 @@ specs = describe "Lambda" $ do
 
     it "should fail if it tries to apply a variable" $
       eval (Ap (V 'x') (V 'y')) `shouldBe` Left ("cannot apply " ++ show (V 'y') ++ " to variable (" ++ show (V 'x') ++ ")")
+
+  describe "evalSteps" $ do
+    it "should should show no steps in valuating to itself" $ do
+      evalSteps (L 'x' (V 'y'))`shouldBe` Right []
+      evalSteps (V 'y') `shouldBe` Right []
+
+    it "should show evaluation steps in plain english" $ do
+      evalSteps (Ap (L 'x' (V 'x')) (V 'y')) `shouldBe` Right ["Substituting y in place of x in (λx.x), resulting in y"]
+      evalSteps (Ap (Ap (L 'x' (L 'y' (V 'x'))) (V 'z')) (V 'a'))
+        `shouldBe` Right ["Substituting z in place of x in (λx.(λy.x)), resulting in (λy.z)",
+                          "Substituting a in place of y in (λy.z), resulting in z"]

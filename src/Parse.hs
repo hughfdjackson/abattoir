@@ -36,7 +36,7 @@ parseName = V <$> lexName
 
 -- lex
 lexLambda :: Parser Char
-lexLambda = char 'λ'
+lexLambda = char 'λ' <|> char '|'
 
 lexDot :: Parser Char
 lexDot = char '.'
