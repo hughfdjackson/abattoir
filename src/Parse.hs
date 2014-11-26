@@ -18,10 +18,7 @@ parseAllExpr :: Parser Expr
 parseAllExpr = parseExpr <* eof
 
 parseExpr :: Parser Expr
-parseExpr = parseLambdaOrName `chainl1` parseAp
-
-parseAp :: Parser (Expr -> Expr -> Expr)
-parseAp = return Ap
+parseExpr = parseLambdaOrName `chainl1` withOptParens (return Ap)
 
 parseLambdaOrName :: Parser Expr
 parseLambdaOrName = withOptParens $ parseLambda <|> parseName
