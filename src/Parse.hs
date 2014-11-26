@@ -18,10 +18,10 @@ parseAllExpr :: Parser Expr
 parseAllExpr = parseExpr <* eof
 
 parseExpr :: Parser Expr
-parseExpr = parseLambdaOrName `chainl1` withOptParens (return Ap)
+parseExpr = (parseLambdaOrName <|> withParens parseExpr) `chainl1` return Ap
 
 parseLambdaOrName :: Parser Expr
-parseLambdaOrName = withOptParens $ parseLambda <|> parseName
+parseLambdaOrName = parseLambda <|> parseName
 
 parseLambda :: Parser Expr
 parseLambda = do
@@ -44,5 +44,5 @@ lexDot = char '.'
 lexName :: Parser Char
 lexName = oneOf ['a'..'z']
 
-withOptParens :: Parser a -> Parser a
-withOptParens parser = between (char '(') (char ')') parser <|> parser
+withParens :: Parser a -> Parser a
+withParens = between (char '(') (char ')')
