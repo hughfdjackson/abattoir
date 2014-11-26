@@ -7,4 +7,4 @@ import Lambda
 
 spec = describe "Parsing" $
   it "should be able to parse a shown arbitrary expression back to the same form" $ property $ \expr ->
-  parse (show expr) === Right (expr :: Expr)
+    parse (show expr) === Right (expr :: Expr)

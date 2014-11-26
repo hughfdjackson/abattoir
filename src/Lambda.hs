@@ -29,7 +29,6 @@ data Expr = V Name
 instance Show Expr where
   show expr = case expr of
     (V name)                -> showName name
-    (Ap expr' ap@(Ap _ _))  -> show expr' ++ "(" ++ show ap ++ ")"
     (Ap expr' arg)          -> show expr' ++ show arg
     (L name body)           -> "(λ" ++ showName name ++ "." ++ show body ++ ")"
     where showName n = [n]
@@ -37,20 +36,22 @@ instance Show Expr where
 
 instance Arbitrary Expr where
   arbitrary = do
-    n <- choose (0, 2) :: Gen Int
-    case n of
-      0 -> do name <- possibleNames
-              return $ V name
-
-      1 -> do name <- possibleNames
-              expr <- arbitrary
-              return $ L name expr
-
-      2 -> do expr  <- arbitrary
-              expr' <- arbitrary
-              name  <- possibleNames
-              return $ Ap (L name expr) expr'
+      n <- choose (0, 2) :: Gen Int
+      genExpr n
     where possibleNames = elements ['a'..'z']
+          genExpr n = case n of
+              0 -> do name <- possibleNames
+                      return $ V name
+
+              1 -> do name <- possibleNames
+                      expr <- arbitrary
+                      return $ L name expr
+
+              2 -> do expr  <- arbitrary
+                      n     <- choose (0, 1) :: Gen Int -- only contain a lambda or name in args
+                      expr' <- genExpr n
+                      name  <- possibleNames
+                      return $ Ap (L name expr) expr'
 
 
 

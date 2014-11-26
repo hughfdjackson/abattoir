@@ -16,9 +16,6 @@ specs = describe "Lambda" $ do
     it "should show application" $
       show (Ap (V 'x') (V 'y')) `shouldBe` "xy"
 
-    it "should clarify right application with parens" $
-      show (Ap (V 'x') (Ap (V 'y') (V 'x'))) `shouldBe` "x(yx)"
-
     it "should show Abstraction" $
       show (L 'x' (V 'y')) `shouldBe` "(λx.y)"
 
