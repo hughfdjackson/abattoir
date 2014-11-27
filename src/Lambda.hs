@@ -87,7 +87,7 @@ evalWithSteps expr = case expr of
                (Ap original@(L name body) arg)  -> do
                   let result = substitute name arg body
                   tell [Substitute arg name original result]
-                  return result
+                  evalWithSteps result
 
                (Ap inner@(Ap _ _) arg)      -> do
                  evalledInner <- evalWithSteps inner

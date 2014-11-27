@@ -72,14 +72,16 @@ specs = describe "Lambda" $ do
 
   describe "eval" $ do
     it "should .. evaluate things!" $ do
-      eval (Ap (L 'x' (Ap (V 'y') (V 'x'))) (V 'a')) `shouldBe` Right (Ap (V 'y') (V 'a'))
       eval (L 'x' (Ap (V 'y') (V 'x'))) `shouldBe` Right (L 'x' (Ap (V 'y') (V 'x')))
       eval (V 'x') `shouldBe` Right (V 'x')
       eval (Ap combI combI) `shouldBe` Right combI
       eval (Ap (Ap combK (V 'y')) (V 'x')) `shouldBe` Right (V 'y')
+      eval (Ap (L 'y' (Ap (V 'y') (V 'x'))) combI) `shouldBe` Right (V 'x')
 
-    it "should fail if it tries to apply a variable" $
+    it "should fail if it tries to apply a variable" $ do
       eval (Ap (V 'x') (V 'y')) `shouldBe` Left ("cannot apply " ++ show (V 'y') ++ " to variable (" ++ show (V 'x') ++ ")")
+      eval (Ap (L 'x' (Ap (V 'y') (V 'x'))) (V 'a')) `shouldBe` Left ("cannot apply " ++ show (V 'a') ++ " to variable (" ++ show (V 'y') ++ ")")
+
 
   describe "evalSteps" $ do
     it "should should show no steps in valuating to itself" $ do

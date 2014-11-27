@@ -30,6 +30,7 @@ quit = outputStrLn "Bye"
 help :: InputT IO ()
 help = outputStrLn "You ain't getting no help from me... yet"
 
+runRepl :: IO ()
 runRepl = runInputT defaultSettings loop
   where
     loop :: InputT IO ()
@@ -54,6 +55,7 @@ runRepl = runInputT defaultSettings loop
           loop
 
 
+main :: IO ()
 main = runRepl
 
 
