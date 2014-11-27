@@ -19,7 +19,6 @@ import           Data.Set as Set
 import           Test.QuickCheck                 (Arbitrary, Gen, arbitrary,
                                                   choose, elements)
 
-
 type Name = Char
 
 data Expr = V Name
@@ -68,9 +67,8 @@ combI = L 'x' (V 'x')
 data Entry = Substitute Expr Name Expr Expr
 
 instance Show Entry where
-  show (Substitute arg name original result) = "Substituting " ++ show arg
-                                            ++ " in place of " ++ showName name ++ " in "
-                                            ++ show original ++ ", resulting in " ++ show result
+  show (Substitute arg name original result) = "[" ++ show arg ++ "/" ++ showName name ++ "] "
+                                            ++ show original ++ " == " ++ show result
 
 
 eval :: Expr -> Either String Expr

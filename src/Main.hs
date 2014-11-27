@@ -2,31 +2,58 @@ module Main (main) where
 import System.IO
 
 import Parse (parse)
-import Lambda (eval, Expr)
-import Control.Monad (unless)
+import Lambda (eval, evalSteps, Expr)
+import Control.Monad (unless, void)
+import Data.List (intercalate, isPrefixOf, stripPrefix)
+import Data.Maybe (fromMaybe)
+import System.Console.Haskeline
 
-flushStr :: String -> IO ()
-flushStr str = putStr str >> hFlush stdout
+evalAndShow :: String -> String
+evalAndShow expr = resultToString $ showAndWrapResult $ parse expr >>= eval
+  where showAndWrapResult = fmap (\a -> [show a])
 
-readPrompt :: String -> IO String
-readPrompt prompt = flushStr prompt >> getLine
+evalStepAndShow :: String -> String
+evalStepAndShow input = resultToString $ do
+  expr <- parse input
+  steps <- evalSteps expr
+  result <- eval expr
+  return $ steps ++ [show result]
 
-evalAndPrint :: String -> IO ()
-evalAndPrint expr = do
-  let result = parse expr >>= eval
-  putStrLn $ resultToString result
-
-resultToString :: Either String Expr -> String
+resultToString :: Either String [String] -> String
 resultToString e = case e of
   (Left f)  -> "ERROR:" ++ f
-  (Right r) -> show r
+  (Right r) -> unlines r
 
-until' :: Monad m => (a -> Bool) -> m a -> (a -> m ()) -> m ()
-until' pred prompt action = do
-   result <- prompt
-   unless (pred result) $
-      action result >> until' pred prompt action
+quit :: InputT IO ()
+quit = outputStrLn "Bye"
 
-main = until' (== "quit") (readPrompt "> ") evalAndPrint
+help :: InputT IO ()
+help = outputStrLn "You ain't getting no help from me... yet"
+
+runRepl = runInputT defaultSettings loop
+  where
+    loop :: InputT IO ()
+    loop = do
+        minput <- getInputLine "> "
+        case minput of
+            Nothing -> return ()
+            Just ":q" -> quit
+            Just ":quit" -> quit
+            Just ":help" -> help >> loop
+            Just input -> handleInput input
+
+
+    handleInput :: String -> InputT IO ()
+    handleInput input
+      | ":steps " `isPrefixOf` input = do
+          let input' = fromMaybe "" (stripPrefix ":steps " input)
+          outputStrLn $ evalStepAndShow input'
+          loop
+      | otherwise = do
+          outputStrLn (evalAndShow input)
+          loop
+
+
+main = runRepl
 
 

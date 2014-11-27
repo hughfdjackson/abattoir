@@ -3,7 +3,7 @@ module Parse (parse) where
 import Text.Parsec hiding (parse)
 import qualified Text.Parsec as P
 import Text.Parsec.String (Parser)
-import Lambda (Expr(..), Name)
+import Lambda (Expr(..))
 import Data.Functor ((<$>))
 import Control.Arrow (left)
 import Control.Applicative ((<*))
@@ -36,7 +36,7 @@ parseName = V <$> lexName
 
 -- lex
 lexLambda :: Parser Char
-lexLambda = char 'λ' <|> char '|'
+lexLambda = char 'λ' <|> char '\\'
 
 lexDot :: Parser Char
 lexDot = char '.'
