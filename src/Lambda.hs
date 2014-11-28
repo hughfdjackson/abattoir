@@ -69,11 +69,12 @@ combI :: Expr
 combI = L 'x' (V 'x')
 
 -- Evaluation
-data Entry = Substitute Expr Name Expr Expr
+data Entry = Substitute Expr Name Expr Expr Expr
 
 instance Show Entry where
-  show (Substitute arg name original result) = "[" ++ show arg ++ "/" ++ showName name ++ "] "
-                                            ++ show original ++ " == " ++ show result
+  show (Substitute arg name body original result) =
+       show original ++ " == " ++ "[" ++ show arg ++ "/" ++ showName name ++ "] "
+    ++ show body ++ " == " ++ show result
 
 
 eval :: Expr -> Either String Expr
@@ -91,7 +92,7 @@ evalWithSteps expr = case expr of
                v@(V _)                          -> return v
                (Ap original@(L name body) arg)  -> do
                   let result = substitute name arg body
-                  tell [Substitute arg name original result]
+                  tell [Substitute arg name body original result]
                   evalWithSteps result
 
                (Ap inner@(Ap _ _) arg)      -> do
