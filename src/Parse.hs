@@ -3,7 +3,7 @@ module Parse (parse, parseExpr) where
 import Text.Parsec hiding (parse)
 import qualified Text.Parsec as P
 import Text.Parsec.String (Parser)
-import Lambda (Expr(..))
+import Lambda (Expr(..), Name)
 import Data.Functor ((<$>))
 import Control.Arrow (left)
 import Control.Applicative ((<*))
@@ -26,10 +26,11 @@ parseLambdaOrName = parseLambda <|> parseName
 parseLambda :: Parser Expr
 parseLambda = do
   lexLambda
-  name <- lexName
+  names <- lexNames
   lexDot
   expr <- parseExpr
-  return $ L name expr
+  return $ foldr L expr names
+
 
 parseName :: Parser Expr
 parseName = V <$> lexName
@@ -41,8 +42,11 @@ lexLambda = char 'λ' <|> char '\\'
 lexDot :: Parser Char
 lexDot = char '.'
 
-lexName :: Parser Char
+lexName :: Parser Name
 lexName = oneOf ['a'..'z']
+
+lexNames :: Parser [Name]
+lexNames = many1 lexName
 
 withParens :: Parser a -> Parser a
 withParens = between (char '(') (char ')')

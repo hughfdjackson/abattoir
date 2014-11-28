@@ -4,8 +4,6 @@ import           Data.Either     ()
 import           Data.Set        as Set
 import           Lambda
 import           Test.Hspec
-import           Test.QuickCheck
-
 
 specs :: Spec
 specs = describe "Lambda" $ do
@@ -21,6 +19,10 @@ specs = describe "Lambda" $ do
 
     it "should show Abstraction" $
       show (L 'x' (V 'y')) `shouldBe` "(λx.y)"
+
+    it "should show nested functions as a function of 'multiple arguments'" $ do
+      show (L 'x' (L 'y' (V 'y'))) `shouldBe` "(λxy.y)"
+      show (L 'x' (L 'y' (L 'z' (V 'z')))) `shouldBe` "(λxyz.z)"
 
   describe "renameBoundTo" $ do
     it "should rename to the next alphabetical letter *not* bound in the current expression" $ do
@@ -91,5 +93,5 @@ specs = describe "Lambda" $ do
     it "should show evaluation steps in plain english" $ do
       evalSteps (Ap (L 'x' (V 'x')) (V 'y')) `shouldBe` Right ["[y/x] (λx.x) == y"]
       evalSteps (Ap (Ap (L 'x' (L 'y' (V 'x'))) (V 'z')) (V 'a'))
-        `shouldBe` Right ["[z/x] (λx.(λy.x)) == (λy.z)",
+        `shouldBe` Right ["[z/x] (λxy.x) == (λy.z)",
                           "[a/y] (λy.z) == z"]

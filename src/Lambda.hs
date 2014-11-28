@@ -27,10 +27,16 @@ data Expr = V Name
 
 instance Show Expr where
   show expr = case expr of
-    (V name)                -> showName name
-    (Ap expr' ap@(Ap _ _))  -> show expr' ++ "(" ++ show ap ++ ")"
-    (Ap expr' arg)          -> show expr' ++ show arg
-    (L name body)           -> "(λ" ++ showName name ++ "." ++ show body ++ ")"
+      (V name)                -> showName name
+      (Ap expr' ap@(Ap _ _))  -> show expr' ++ "(" ++ show ap ++ ")"
+      (Ap expr' arg)          -> show expr' ++ show arg
+      l@(L name body)         -> "(λ" ++ showArgAndBody l ++ ")"
+
+showArgAndBody :: Expr -> String
+showArgAndBody expr = case expr of
+  (L name body) -> showName name ++ showArgAndBody body
+  (V name)      -> "." ++ showName name
+  ap@(Ap _ _)   -> "." ++ show ap
 
 showName :: a -> [a]
 showName n = [n]
