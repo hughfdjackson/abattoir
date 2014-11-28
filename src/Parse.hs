@@ -1,4 +1,4 @@
-module Parse (parse) where
+module Parse (parse, parseExpr) where
 
 import Text.Parsec hiding (parse)
 import qualified Text.Parsec as P
