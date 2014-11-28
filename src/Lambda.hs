@@ -14,7 +14,6 @@ module Lambda (
 
 import           Control.Monad.Trans
 import           Control.Monad.Trans.Writer.Lazy
-import           Data.Either
 import           Data.Set as Set
 import           Test.QuickCheck                 (Arbitrary, Gen, arbitrary,
                                                   choose, elements)

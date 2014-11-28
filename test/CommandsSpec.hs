@@ -17,6 +17,10 @@ spec = describe "Commands" $
       parse ":step    (\\x.x)" `shouldBe` Right (Step (L 'x' (V 'x')))
       parse "  :step (\\x.x)  " `shouldBe` Right (Step (L 'x' (V 'x')))
 
+    it "should parse :steps expr to steps" $ do
+      parse ":steps (\\x.x)" `shouldBe` Right (Steps (L 'x' (V 'x')))
+      parse ":steps    (\\x.x)" `shouldBe` Right (Steps (L 'x' (V 'x')))
+      parse "  :steps (\\x.x)  " `shouldBe` Right (Steps (L 'x' (V 'x')))
 
     it "should parse :quit to quit" $ do
       parse ":quit" `shouldBe` Right Quit

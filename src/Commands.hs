@@ -9,6 +9,7 @@ import Control.Monad (liftM)
 
 data Command = Eval Expr
              | Step Expr
+             | Steps Expr
              | Help
              | Quit
             deriving (Show, Eq)
@@ -18,7 +19,7 @@ parse = left show . P.parse parseCommand  ""
 
 parseCommand :: Parser Command
 parseCommand = optWhitespace (colonCommands <|> parseEval)
-  where colonCommands = char ':' >> (parseHelp <|> parseStep <|> parseQuit)
+  where colonCommands = char ':' >> (parseHelp <|> parseQuit <|> try parseStep <|> parseSteps)
 
 parseHelp :: Parser Command
 parseHelp = string "help" >> return Help
@@ -27,10 +28,10 @@ parseQuit :: Parser Command
 parseQuit = string "quit" >> return Quit
 
 parseStep :: Parser Command
-parseStep = do
-  string "step "
-  expr <- optWhitespace parseExpr
-  return $ Step expr
+parseStep = liftM Step (string "step" >> many1 space >> optWhitespace parseExpr)
+
+parseSteps :: Parser Command
+parseSteps = liftM Steps (string "steps" >> many1 space >> optWhitespace parseExpr)
 
 parseEval :: Parser Command
 parseEval = liftM Eval (optWhitespace parseExpr)

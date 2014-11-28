@@ -1,13 +1,15 @@
 module Main (main) where
-import System.IO
+import           System.IO
 
-import Lambda (eval, evalSteps, Expr)
-import Control.Monad (unless, void)
-import Data.List (intercalate, isPrefixOf, stripPrefix)
-import Data.Maybe (fromMaybe)
-import Data.Functor ((<$>))
-import System.Console.Haskeline
-import Commands
+import           Commands
+import           Control.Monad                    (unless, void)
+import           Data.Functor                     ((<$>))
+import           Data.List                        (intercalate, isPrefixOf,
+                                                   stripPrefix)
+import           Data.Maybe                       (fromMaybe)
+import           Lambda                           (Expr, eval, evalSteps)
+import           System.Console.Haskeline
+import           System.Console.Haskeline.History
 
 
 outputResult :: Either String [String] -> InputT IO ()
@@ -22,16 +24,17 @@ handleInput (Left  error)   = handleError error >> runReplStep
 
 handleCommand :: Command -> InputT IO ()
 handleCommand command = case command of
-    Quit -> quit
-    Help -> help >> runReplStep
-    Step expr -> outputResult (evalSteps expr) >> runReplStep
-    Eval expr -> outputResult ((:[]) . show <$> eval expr) >> runReplStep
+    Quit        -> quit
+    Help        -> help >> runReplStep
+    Steps expr  -> outputResult (evalSteps expr) >> runReplStep
+    Step expr   -> outputResult (take 1 <$> evalSteps expr) >> runReplStep
+    Eval expr   -> outputResult ((:[]) . show <$> eval expr) >> runReplStep
   where quit = outputStrLn "Bye"
         help = outputStrLn "You ain't getting no help from me... yet"
 
-
 handleError :: String -> InputT IO ()
 handleError = outputStrLn . ("ERROR: " ++)
+
 
 runReplStep :: InputT IO ()
 runReplStep = do
