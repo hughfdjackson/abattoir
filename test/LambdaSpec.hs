@@ -91,7 +91,7 @@ specs = describe "Lambda" $ do
       evalSteps (V 'y') `shouldBe` Right []
 
     it "should show evaluation steps in plain english" $ do
-      evalSteps (Ap (L 'x' (V 'x')) (V 'y')) `shouldBe` Right ["(λx.x) == [y/x] x == y"]
+      evalSteps (Ap (L 'x' (V 'x')) (V 'y')) `shouldBe` Right ["(λx.x)y == [y/x] x == y"]
       evalSteps (Ap (Ap (L 'x' (L 'y' (V 'x'))) (V 'z')) (V 'a'))
         `shouldBe` Right ["(λxy.x)z == [z/x] (λy.x) == (λy.z)",
-                          "(λy.z) == [a/y] z == z"]
+                          "(λy.z)a == [a/y] z == z"]

@@ -90,7 +90,7 @@ evalWithSteps expr = case expr of
                (Ap v@(V _) arg)                 -> lift $ Left $ "cannot apply " ++ show arg ++ " to variable (" ++ show v ++ ")"
                l@(L _ _)                        -> return l
                v@(V _)                          -> return v
-               (Ap original@(L name body) arg)  -> do
+               original@(Ap (L name body) arg)  -> do
                   let result = substitute name arg body
                   tell [Substitute arg name body original result]
                   evalWithSteps result
