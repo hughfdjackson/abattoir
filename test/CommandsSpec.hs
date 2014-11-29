@@ -30,3 +30,8 @@ spec = describe "Commands" $
       parse "(\\x.x)" `shouldBe` Right (Eval (L 'x' (V 'x')))
       parse "   (\\x.x)" `shouldBe` Right (Eval (L 'x' (V 'x')))
       parse "(\\x.x)    " `shouldBe` Right (Eval (L 'x' (V 'x')))
+
+    it "should parse unrecognised" $ do
+      parse ":foobar" `shouldBe` Right (Unrecognised ":foobar")
+      parse ":stepss" `shouldBe` Right (Unrecognised ":stepss")
+

@@ -24,11 +24,15 @@ handleInput (Left  error)   = handleError error >> runReplStep
 
 handleCommand :: Command -> InputT IO ()
 handleCommand command = case command of
-    Quit        -> quit
-    Help        -> help >> runReplStep
-    Steps expr  -> outputResult (evalSteps expr) >> runReplStep
-    Step expr   -> outputResult (take 1 <$> evalSteps expr) >> runReplStep
-    Eval expr   -> outputResult ((:[]) . show <$> eval expr) >> runReplStep
+    Quit                 -> quit
+    Help                 -> help >> runReplStep
+    Steps expr           -> outputResult (evalSteps expr) >> runReplStep
+    Step expr            -> outputResult (take 1 <$> evalSteps expr) >> runReplStep
+    Eval expr            -> outputResult ((:[]) . show <$> eval expr) >> runReplStep
+    Unrecognised command -> do
+      outputStrLn $ "could not recognize command " ++ command
+      outputStrLn "try :help"
+      runReplStep
   where quit = outputStrLn "Bye"
         help = outputStrLn "You ain't getting no help from me... yet"
 

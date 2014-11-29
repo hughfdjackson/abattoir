@@ -6,12 +6,14 @@ import Lambda (Expr(..))
 import Parse (parseExpr)
 import Control.Arrow (left)
 import Control.Monad (liftM)
+import Data.Functor ((<$>))
 
 data Command = Eval Expr
              | Step Expr
              | Steps Expr
              | Help
              | Quit
+             | Unrecognised String
             deriving (Show, Eq)
 
 parse :: String -> Either String Command
@@ -19,7 +21,11 @@ parse = left show . P.parse parseCommand  ""
 
 parseCommand :: Parser Command
 parseCommand = optWhitespace (colonCommands <|> parseEval)
-  where colonCommands = char ':' >> (parseHelp <|> parseQuit <|> try parseStep <|> parseSteps)
+  where colonCommands = char ':' >> (parseHelp
+                                 <||> parseQuit
+                                 <||> parseStep
+                                 <||> parseSteps
+                                 <||> parseUnrecognised)
 
 parseHelp :: Parser Command
 parseHelp = string "help" >> return Help
@@ -33,9 +39,14 @@ parseStep = liftM Step (string "step" >> many1 space >> optWhitespace parseExpr)
 parseSteps :: Parser Command
 parseSteps = liftM Steps (string "steps" >> many1 space >> optWhitespace parseExpr)
 
+parseUnrecognised :: Parser Command
+parseUnrecognised = liftM Unrecognised $ (":" ++) <$> many anyChar
+
 parseEval :: Parser Command
 parseEval = liftM Eval (optWhitespace parseExpr)
 
-
 optWhitespace :: Parser a -> Parser a
 optWhitespace = between spaces spaces
+
+(<||>) :: Parser a -> Parser a -> Parser a
+a <||> b = try a <|> try b
