@@ -2,7 +2,7 @@ module Main (main) where
 
 import           Commands
 import           Data.Functor                     ((<$>))
-import           Lambda                           (Synonyms, eval', evalSteps', synonymsEmpty)
+import           LambdaWithSynonyms               (Synonyms, eval', evalSteps', defaultSynonyms)
 import           System.Console.Haskeline
 import           Control.Monad.Trans.State
 import           Control.Monad.Trans (lift)
@@ -53,7 +53,7 @@ runReplStep = do
     maybe (return ()) (handleInput `fmap` Commands.parse) minput
 
 main :: IO ()
-main = runInputT defaultSettings (evalStateT runReplStep synonymsEmpty)
+main = runInputT defaultSettings (evalStateT runReplStep defaultSynonyms)
 
 
 

@@ -2,7 +2,7 @@ module CommandsSpec (spec) where
 
 import Test.Hspec
 import Commands (parse, Command(..))
-import Lambda
+import LambdaWithSynonyms
 
 spec :: SpecWith ()
 spec = describe "Commands" $

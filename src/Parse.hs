@@ -3,7 +3,7 @@ module Parse (parse, parseExpr, lexSynonym) where
 import Text.Parsec hiding (parse)
 import qualified Text.Parsec as P
 import Text.Parsec.String (Parser)
-import Lambda (Expr'(..), Name)
+import LambdaWithSynonyms (Expr'(..))
 import Data.Functor ((<$>))
 import Control.Arrow (left)
 import Control.Applicative ((<*))

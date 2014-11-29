@@ -2,7 +2,7 @@ module Commands (Commands.parse, Command(..)) where
 
 import Text.Parsec as P
 import Text.Parsec.String (Parser)
-import Lambda (Expr'(..), Name)
+import LambdaWithSynonyms (Expr'(..), Name)
 import Parse (parseExpr, lexSynonym)
 import Control.Arrow (left)
 import Control.Monad (liftM)

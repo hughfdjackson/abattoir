@@ -3,7 +3,7 @@ module ParseSpec (spec) where
 import Test.Hspec
 import Test.QuickCheck
 import Parse (parse)
-import Lambda
+import LambdaWithSynonyms
 
 instance Arbitrary Expr' where
    arbitrary = do

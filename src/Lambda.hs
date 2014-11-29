@@ -1,16 +1,9 @@
 module Lambda (
   Expr(..),
   Name,
-  Expr'(..),
-  Synonyms,
-  substituteSynonyms,
-  synonymsEmpty,
   eval,
   evalSteps,
-  eval',
-  evalSteps',
   substitute,
-  combI, combK,
   renameBoundTo,
   renameBoundWithout,
   freeNames,
@@ -45,54 +38,6 @@ instance Show Expr where
 showName :: a -> [a]
 showName n = [n]
 
-type Synonyms = Map.Map Char Expr
-
-data Expr' = V' Name
-           | S' Name
-           | L' Name Expr'
-           | Ap' Expr' Expr'
-          deriving (Eq)
-
-instance Show Expr' where
-  show expr = case expr of
-      (S' name)                -> showName name
-      (V' name)                -> showName name
-      (Ap' expr' ap@(Ap' _ _)) -> show expr' ++ "(" ++ show ap ++ ")"
-      (Ap' expr' arg)          -> show expr' ++ show arg
-      l@(L' _ _)               -> "(λ" ++ showArgAndBody l ++ ")"
-    where showArgAndBody (L' name body) = showName name ++ showArgAndBody body
-          showArgAndBody (V' name)      =  "." ++ showName name
-          showArgAndBody (S' name)      =  "." ++ showName name
-          showArgAndBody ap@(Ap' _ _)   = "." ++ show ap
-
-substituteSynonyms :: Synonyms -> Expr' -> Either String Expr
-substituteSynonyms syns expr = case expr of
-    (V' name)        -> return $ V name
-    (Ap' e e')       -> do
-      lExpr  <- substituteSynonyms syns e
-      lExpr' <- substituteSynonyms syns e'
-      return $ Ap lExpr lExpr'
-    (L' name e)      -> do
-      lExpr <- substituteSynonyms syns e
-      return $ L name lExpr
-    (S' name)        -> handleLookupResult name $ Map.lookup name syns
-
-synonymsEmpty :: Synonyms
-synonymsEmpty = Map.empty
-
-handleLookupResult :: Name -> Maybe Expr -> Either String Expr
-handleLookupResult key expr = case expr of
-  (Just a)  -> Right a
-  (Nothing) -> Left $ "Cannot find synonym " ++ [key]
-
-
--- Combinators
-combK :: Expr
-combK = L 'x' (L 'y' (V 'x'))
-
-combI :: Expr
-combI = L 'x' (V 'x')
-
 -- Evaluation
 data Entry = Substitute Expr Name Expr Expr Expr
 
@@ -102,16 +47,12 @@ instance Show Entry where
     ++ show body ++ " == " ++ show result
 
 
-
 eval :: Expr -> Either String Expr
 eval = fmap fst . runWriterT . evalWithSteps
 
 evalSteps :: Expr -> Either String [String]
 evalSteps = fmap (fmap show) . execWriterT . evalWithSteps
 
-eval' syns expr = substituteSynonyms syns expr >>= eval
-
-evalSteps' syns expr' = substituteSynonyms syns expr' >>= evalSteps
 
 -- evals an expression, producing the result and a step-by-step list of
 -- the actions that went into it
