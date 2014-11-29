@@ -18,8 +18,8 @@ import           Data.Set as Set
 import           Test.QuickCheck                 (Arbitrary, Gen, arbitrary,
                                                   choose, elements)
 
-type Name = Char
 
+type Name = Char
 data Expr = V Name
           | L Name Expr
           | Ap Expr Expr
