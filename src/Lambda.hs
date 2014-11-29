@@ -1,11 +1,14 @@
 module Lambda (
   Expr(..),
   Name,
+  Expr'(..),
   Synonyms,
   substituteSynonyms,
   synonymsEmpty,
   eval,
   evalSteps,
+  eval',
+  evalSteps',
   substitute,
   combI, combK,
   renameBoundTo,
@@ -19,14 +22,11 @@ import           Control.Monad.Trans
 import           Control.Monad.Trans.Writer.Lazy
 import           Data.Set as Set
 import qualified Data.Map as Map
-import           Test.QuickCheck                 (Arbitrary, Gen, arbitrary,
-                                                  choose, elements)
-
-type Synonyms = Map.Map Char Expr
 
 type Name = Char
+
+
 data Expr = V Name
-          | S Name
           | L Name Expr
           | Ap Expr Expr
           deriving (Eq)
@@ -34,54 +34,48 @@ data Expr = V Name
 instance Show Expr where
   show expr = case expr of
       (V name)                -> showName name
-      (S name)                -> showName name
       (Ap expr' ap@(Ap _ _))  -> show expr' ++ "(" ++ show ap ++ ")"
       (Ap expr' arg)          -> show expr' ++ show arg
       l@(L _ _)               -> "(λ" ++ showArgAndBody l ++ ")"
+    where showArgAndBody (L name body) = showName name ++ showArgAndBody body
+          showArgAndBody (V name)      =  "." ++ showName name
+          showArgAndBody ap@(Ap _ _)   = "." ++ show ap
 
-showArgAndBody :: Expr -> String
-showArgAndBody expr = case expr of
-  (L name body) -> showName name ++ showArgAndBody body
-  (V name)      -> "." ++ showName name
-  (S name)      -> "." ++ showName name
-  ap@(Ap _ _)   -> "." ++ show ap
 
 showName :: a -> [a]
 showName n = [n]
 
-instance Arbitrary Expr where
-  arbitrary = do
-    n <- choose (0, 3) :: Gen Int
-    case n of
-      0 -> do name <- possibleNames
-              return $ V name
+type Synonyms = Map.Map Char Expr
 
-      1 -> do name <- possibleSynonyms
-              return $ S name
+data Expr' = V' Name
+           | S' Name
+           | L' Name Expr'
+           | Ap' Expr' Expr'
+          deriving (Eq)
 
-      2 -> do name <- possibleNames
-              expr <- arbitrary
-              return $ L name expr
+instance Show Expr' where
+  show expr = case expr of
+      (S' name)                -> showName name
+      (V' name)                -> showName name
+      (Ap' expr' ap@(Ap' _ _)) -> show expr' ++ "(" ++ show ap ++ ")"
+      (Ap' expr' arg)          -> show expr' ++ show arg
+      l@(L' _ _)               -> "(λ" ++ showArgAndBody l ++ ")"
+    where showArgAndBody (L' name body) = showName name ++ showArgAndBody body
+          showArgAndBody (V' name)      =  "." ++ showName name
+          showArgAndBody (S' name)      =  "." ++ showName name
+          showArgAndBody ap@(Ap' _ _)   = "." ++ show ap
 
-      _ -> do expr  <- arbitrary
-              expr' <- arbitrary
-              name  <- possibleNames
-              return $ Ap (L name expr) expr'
-    where possibleNames = elements ['a'..'z']
-          possibleSynonyms = elements $ ['A'..'Z'] ++ ['0'..'9']
-
-
-substituteSynonyms :: Synonyms -> Expr -> Either String Expr
+substituteSynonyms :: Synonyms -> Expr' -> Either String Expr
 substituteSynonyms syns expr = case expr of
-    (V name)        -> return $ V name
-    (Ap e e')       -> do
+    (V' name)        -> return $ V name
+    (Ap' e e')       -> do
       lExpr  <- substituteSynonyms syns e
       lExpr' <- substituteSynonyms syns e'
       return $ Ap lExpr lExpr'
-    (L name e)      -> do
+    (L' name e)      -> do
       lExpr <- substituteSynonyms syns e
       return $ L name lExpr
-    (S name)        -> handleLookupResult name $ Map.lookup name syns
+    (S' name)        -> handleLookupResult name $ Map.lookup name syns
 
 synonymsEmpty :: Synonyms
 synonymsEmpty = Map.empty
@@ -108,18 +102,21 @@ instance Show Entry where
     ++ show body ++ " == " ++ show result
 
 
+
 eval :: Expr -> Either String Expr
 eval = fmap fst . runWriterT . evalWithSteps
 
 evalSteps :: Expr -> Either String [String]
 evalSteps = fmap (fmap show) . execWriterT . evalWithSteps
 
+eval' syns expr = substituteSynonyms syns expr >>= eval
+
+evalSteps' syns expr' = substituteSynonyms syns expr' >>= evalSteps
+
 -- evals an expression, producing the result and a step-by-step list of
 -- the actions that went into it
 evalWithSteps :: Expr -> WriterT [Entry] (Either String) Expr
 evalWithSteps expr = case expr of
-    (S name)                         -> synonymError name
-    (Ap (S name) arg)                -> synonymError name
     (Ap v@(V _) arg)                 -> lift $ Left $ "cannot apply " ++ show arg ++ " to variable (" ++ show v ++ ")"
     l@(L _ _)                        -> return l
     v@(V _)                          -> return v
@@ -130,7 +127,6 @@ evalWithSteps expr = case expr of
     (Ap inner@(Ap _ _) arg)      -> do
       evalledInner <- evalWithSteps inner
       evalWithSteps (Ap evalledInner arg)
-  where synonymError name = lift $ Left $  "cannot evaluate a synonym that hasn't been substituted for its lambda expression: " ++ showName name
 
 substitute :: Name -> Expr -> Expr -> Expr
 substitute name arg expr = subIn cleanedExpr

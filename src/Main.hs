@@ -7,7 +7,7 @@ import           Data.Functor                     ((<$>))
 import           Data.List                        (intercalate, isPrefixOf,
                                                    stripPrefix)
 import           Data.Maybe                       (fromMaybe)
-import           Lambda                           (Expr, Synonyms, eval, evalSteps)
+import           Lambda                           (Expr, Synonyms, eval', evalSteps', synonymsEmpty)
 import           System.Console.Haskeline
 import           System.Console.Haskeline.History
 import           Control.Monad.Trans.State
@@ -27,18 +27,26 @@ handleInput (Right command) = handleCommand command
 handleInput (Left  error)   = handleError error >> runReplStep
 
 handleCommand :: Command -> ReplSession
-handleCommand command = case command of
-    Quit                 -> quit
-    Help                 -> help >> runReplStep
-    Steps expr           -> outputResult (evalSteps expr) >> runReplStep
-    Step expr            -> outputResult (take 1 <$> evalSteps expr) >> runReplStep
-    Eval expr            -> outputResult ((:[]) . show <$> eval expr) >> runReplStep
-    Let name expr        -> undefined
-    Unrecognised command -> do
-      lift $ outputStrLn $ "could not recognize command " ++ command
-      lift $ outputStrLn "try :help"
-      runReplStep
-  where quit = lift $ outputStrLn "Bye"
+handleCommand command = do
+    synonyms <- get
+    case command of
+      Quit                 -> quit
+      Help                 -> help >> runReplStep
+      Steps expr           -> outputResult (evalSteps' synonyms expr) >> runReplStep
+      Step expr            -> outputResult (take 1 <$> evalSteps' synonyms expr) >> runReplStep
+      Eval expr            -> outputResult ((:[]) . show <$> eval' synonyms expr) >> runReplStep
+      Let name expr        -> do
+        let expr' = eval' synonyms expr
+        case expr' of
+          (Right e) -> put (Map.insert name e synonyms)
+          (Left f)  -> lift $ outputStrLn $ "ERROR: " ++ f
+        runReplStep
+      Unrecognised command -> do
+        lift $ outputStrLn $ "could not recognize command " ++ command
+        lift $ outputStrLn "try :help"
+        runReplStep
+  where
+        quit = lift $ outputStrLn "Bye"
         help = lift $ outputStrLn "You ain't getting no help from me... yet"
 
 handleError :: String -> ReplSession
@@ -51,7 +59,7 @@ runReplStep = do
     maybe (return ()) (handleInput `fmap` Commands.parse) minput
 
 main :: IO ()
-main = runInputT defaultSettings (fst <$> runStateT runReplStep Map.empty)
+main = runInputT defaultSettings (evalStateT runReplStep synonymsEmpty)
 
 
 

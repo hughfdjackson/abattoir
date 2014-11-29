@@ -8,7 +8,7 @@ import           Test.Hspec
 
 specs :: Spec
 specs = describe "Lambda" $ do
-  describe "show" $ do
+  describe "Expr show" $ do
     it "should show vars" $
       show (V 'x') `shouldBe` "x"
 
@@ -24,6 +24,26 @@ specs = describe "Lambda" $ do
     it "should show nested functions as a function of 'multiple arguments'" $ do
       show (L 'x' (L 'y' (V 'y'))) `shouldBe` "(λxy.y)"
       show (L 'x' (L 'y' (L 'z' (V 'z')))) `shouldBe` "(λxyz.z)"
+
+  describe "Expr' show" $ do
+    it "should show vars" $
+      show (V' 'x') `shouldBe` "x"
+
+    it "should show application" $
+      show (Ap' (V' 'x') (V' 'y')) `shouldBe` "xy"
+
+    it "should clarify right application with parens" $
+      show (Ap' (V' 'x') (Ap' (V' 'y') (V' 'x'))) `shouldBe` "x(yx)"
+
+    it "should show Abstraction" $
+      show (L' 'x' (V' 'y')) `shouldBe` "(λx.y)"
+
+    it "should show nested functions as a function of 'multiple arguments'" $ do
+      show (L' 'x' (L' 'y' (V' 'y'))) `shouldBe` "(λxy.y)"
+      show (L' 'x' (L' 'y' (L' 'z' (V' 'z')))) `shouldBe` "(λxyz.z)"
+
+    it "should show symbols" $
+      show (L' 'x' (L' 'y' (S' 'I'))) `shouldBe` "(λxy.I)"
 
   describe "renameBoundTo" $ do
     it "should rename to the next alphabetical letter *not* bound in the current expression" $ do
@@ -85,18 +105,14 @@ specs = describe "Lambda" $ do
       eval (Ap (V 'x') (V 'y')) `shouldBe` Left ("cannot apply " ++ show (V 'y') ++ " to variable (" ++ show (V 'x') ++ ")")
       eval (Ap (L 'x' (Ap (V 'y') (V 'x'))) (V 'a')) `shouldBe` Left ("cannot apply " ++ show (V 'a') ++ " to variable (" ++ show (V 'y') ++ ")")
 
-    it "should fail if it comes across a synonym that hasn't been substituted" $ do
-      eval (S 'X') `shouldBe` Left ("cannot evaluate a synonym that hasn't been substituted for its lambda expression: X")
-      eval (Ap (S 'X') (V 'x')) `shouldBe` Left ("cannot evaluate a synonym that hasn't been substituted for its lambda expression: X")
-
   describe "substituteSynonyms" $ do
     it "should substitute in synonyms" $ do
       let id = L 'x' (V 'x')
       let synonyms = Map.fromList [('I', id)]
-      substituteSynonyms synonyms (Ap (S 'I') (S 'I')) `shouldBe` Right (Ap id id)
+      substituteSynonyms synonyms (Ap' (S' 'I') (S' 'I')) `shouldBe` Right (Ap id id)
 
     it "should return a failure if a synonym can't be resolved" $
-     substituteSynonyms Map.empty (Ap (S 'I') (S 'I')) `shouldBe` Left "Cannot find synonym I"
+     substituteSynonyms Map.empty (Ap' (S' 'I') (S' 'I')) `shouldBe` Left "Cannot find synonym I"
 
   describe "evalSteps" $ do
     it "should should show no steps in valuating to itself" $ do

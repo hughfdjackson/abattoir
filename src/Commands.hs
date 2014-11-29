@@ -2,19 +2,19 @@ module Commands (Commands.parse, Command(..)) where
 
 import Text.Parsec as P
 import Text.Parsec.String (Parser)
-import Lambda (Expr(..), Name)
+import Lambda (Expr'(..), Name)
 import Parse (parseExpr, lexSynonym)
 import Control.Arrow (left)
 import Control.Monad (liftM)
 import Control.Applicative ((<*>))
 import Data.Functor ((<$>))
 
-data Command = Eval Expr
-             | Step Expr
-             | Steps Expr
+data Command = Eval Expr'
+             | Step Expr'
+             | Steps Expr'
              | Help
              | Quit
-             | Let Name Expr
+             | Let Name Expr'
              | Unrecognised String
             deriving (Show, Eq)
 
@@ -27,6 +27,7 @@ parseCommand = optWhitespace (colonCommands <|> parseEval)
                                  <||> parseQuit
                                  <||> parseStep
                                  <||> parseSteps
+                                 <||> parseLet
                                  <||> parseUnrecognised)
 
 parseHelp :: Parser Command
@@ -42,7 +43,7 @@ parseSteps :: Parser Command
 parseSteps = liftM Steps (string "steps" >> many1 space >> optWhitespace parseExpr)
 
 parseLet :: Parser Command
-parseLet = Let <$> (string "steps" >> many1 space >> lexSynonym) <*> parseExpr
+parseLet = Let <$> (string "let" >> many1 space >> lexSynonym) <*> (many1 space >> parseExpr)
 
 parseUnrecognised :: Parser Command
 parseUnrecognised = liftM Unrecognised $ (":" ++) <$> many anyChar
