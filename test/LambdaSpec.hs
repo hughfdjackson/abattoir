@@ -32,7 +32,7 @@ specs = describe "Lambda" $ do
 
       xToA expr `shouldBe` L 'a' (L 'y' (L 'z' (Ap (Ap (V 'a') (V 'y')) (V 'z'))))
 
-    it "It should not rename a free variable" $ do
+    it "should not rename a free variable" $ do
       let xToA =  'x' `renameBoundTo` 'a'
       let expr = L 'y' (Ap (L 'x' (V 'x'))  (V 'x'))
 

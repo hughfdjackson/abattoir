@@ -29,6 +29,7 @@ handleCommand command = do
       Steps expr           -> outputResult (evalSteps' synonyms expr) >> runReplStep
       Step expr            -> outputResult (take 1 <$> evalSteps' synonyms expr) >> runReplStep
       Eval expr            -> outputResult ((:[]) . show <$> eval' synonyms expr) >> runReplStep
+      ShowSynonyms         -> (lift $ outputStrLn $ show synonyms) >> runReplStep
       Let name expr        -> do
         let expr' = eval' synonyms expr
         case expr' of

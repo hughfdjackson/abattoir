@@ -16,6 +16,7 @@ data Command = Eval Expr'
              | Quit
              | Let Name Expr'
              | Unrecognised String
+             | ShowSynonyms
             deriving (Show, Eq)
 
 parse :: String -> Either String Command
@@ -28,6 +29,7 @@ parseCommand = optWhitespace (colonCommands <|> parseEval)
                                  <||> parseStep
                                  <||> parseSteps
                                  <||> parseLet
+                                 <||> parseShowSynonyms
                                  <||> parseUnrecognised)
 
 parseHelp :: Parser Command
@@ -44,6 +46,9 @@ parseSteps = liftM Steps (string "steps" >> many1 space >> optWhitespace parseEx
 
 parseLet :: Parser Command
 parseLet = Let <$> (string "let" >> many1 space >> lexSynonym) <*> (many1 space >> parseExpr)
+
+parseShowSynonyms :: Parser Command
+parseShowSynonyms = string "synonyms" >> return ShowSynonyms
 
 parseUnrecognised :: Parser Command
 parseUnrecognised = liftM Unrecognised $ (":" ++) <$> many anyChar

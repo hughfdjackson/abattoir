@@ -29,6 +29,9 @@ spec = describe "Commands" $
     it "should parse :let to be a let" $
       parse ":let I (\\x.x)" `shouldBe` Right (Let 'I' (L' 'x' (V' 'x')))
 
+    it "should parse :synonyms to be a synonyms" $
+      parse ":synonyms" `shouldBe` Right ShowSynonyms
+
     it "should parse expr to expr" $ do
       parse "(\\x.x)" `shouldBe` Right (Eval (L' 'x' (V' 'x')))
       parse "   (\\x.x)" `shouldBe` Right (Eval (L' 'x' (V' 'x')))

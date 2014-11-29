@@ -12,7 +12,6 @@ module LambdaWithSynonyms(
 import Lambda (Expr(..), Name, eval, evalSteps)
 import Data.Map as Map
 
-type Synonyms = Map.Map Char Expr
 
 data Expr' = V' Name
            | S' Name
@@ -35,6 +34,9 @@ instance Show Expr' where
 showName :: a -> [a]
 showName n = [n]
 
+-- synonyms
+type Synonyms = Map.Map Char Expr
+
 substituteSynonyms :: Synonyms -> Expr' -> Either String Expr
 substituteSynonyms syns expr = case expr of
     (V' name)        -> return $ V name
@@ -56,7 +58,9 @@ emptySynonyms :: Synonyms
 emptySynonyms = Map.empty
 
 defaultSynonyms :: Synonyms
-defaultSynonyms = emptySynonyms
+defaultSynonyms = Map.fromList [('I', L 'x' (V 'x')),
+                                ('0', L 's' (L 'z' (V 'z'))),
+                                ('S', L 'w' (L 'y' (L 'x' (Ap (V 'y') (Ap (Ap (V 'w') (V 'y')) (V 'x'))))))]
 
 -- evaluation
 eval' :: Synonyms -> Expr' -> Either String Expr
