@@ -1,15 +1,9 @@
 module Main (main) where
-import           System.IO
 
 import           Commands
-import           Control.Monad                    (unless, void)
 import           Data.Functor                     ((<$>))
-import           Data.List                        (intercalate, isPrefixOf,
-                                                   stripPrefix)
-import           Data.Maybe                       (fromMaybe)
-import           Lambda                           (Expr, Synonyms, eval', evalSteps', synonymsEmpty)
+import           Lambda                           (Synonyms, eval', evalSteps', synonymsEmpty)
 import           System.Console.Haskeline
-import           System.Console.Haskeline.History
 import           Control.Monad.Trans.State
 import           Control.Monad.Trans (lift)
 import qualified Data.Map as Map
@@ -18,8 +12,8 @@ type ReplSession = StateT Synonyms (InputT IO) ()
 
 outputResult :: Either String [String] -> ReplSession
 outputResult e = case e of
-  (Left error)  -> handleError error
-  (Right lines) -> mapM_ (lift . outputStrLn) lines
+  (Left  error')  -> handleError error'
+  (Right lines') -> mapM_ (lift . outputStrLn) lines'
 
 
 handleInput :: Either String Command -> ReplSession
@@ -41,8 +35,8 @@ handleCommand command = do
           (Right e) -> put (Map.insert name e synonyms)
           (Left f)  -> lift $ outputStrLn $ "ERROR: " ++ f
         runReplStep
-      Unrecognised command -> do
-        lift $ outputStrLn $ "could not recognize command " ++ command
+      Unrecognised command' -> do
+        lift $ outputStrLn $ "could not recognize command " ++ command'
         lift $ outputStrLn "try :help"
         runReplStep
   where
