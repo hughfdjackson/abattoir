@@ -2,6 +2,7 @@ module LambdaSpec (specs) where
 
 import           Data.Either     ()
 import           Data.Set        as Set
+import           Data.Map        as Map
 import           Lambda
 import           Test.Hspec
 
@@ -84,6 +85,18 @@ specs = describe "Lambda" $ do
       eval (Ap (V 'x') (V 'y')) `shouldBe` Left ("cannot apply " ++ show (V 'y') ++ " to variable (" ++ show (V 'x') ++ ")")
       eval (Ap (L 'x' (Ap (V 'y') (V 'x'))) (V 'a')) `shouldBe` Left ("cannot apply " ++ show (V 'a') ++ " to variable (" ++ show (V 'y') ++ ")")
 
+    it "should fail if it comes across a synonym that hasn't been substituted" $ do
+      eval (S 'X') `shouldBe` Left ("cannot evaluate a synonym that hasn't been substituted for its lambda expression: X")
+      eval (Ap (S 'X') (V 'x')) `shouldBe` Left ("cannot evaluate a synonym that hasn't been substituted for its lambda expression: X")
+
+  describe "substituteSynonyms" $ do
+    it "should substitute in synonyms" $ do
+      let id = L 'x' (V 'x')
+      let synonyms = Map.fromList [('I', id)]
+      substituteSynonyms synonyms (Ap (S 'I') (S 'I')) `shouldBe` Right (Ap id id)
+
+    it "should return a failure if a synonym can't be resolved" $
+     substituteSynonyms Map.empty (Ap (S 'I') (S 'I')) `shouldBe` Left "Cannot find synonym I"
 
   describe "evalSteps" $ do
     it "should should show no steps in valuating to itself" $ do

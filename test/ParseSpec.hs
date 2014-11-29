@@ -8,7 +8,6 @@ import Lambda
 replace :: Char -> Char -> String -> String
 replace x y = fmap (\c -> if c == x then y else c)
 
-
 spec :: SpecWith ()
 spec = describe "Parsing" $ do
   it "should be able to parse a shown arbitrary expression back to the same form" $ property $ \expr ->

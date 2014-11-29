@@ -1,4 +1,4 @@
-module Parse (parse, parseExpr) where
+module Parse (parse, parseExpr, lexSynonym) where
 
 import Text.Parsec hiding (parse)
 import qualified Text.Parsec as P
@@ -21,7 +21,7 @@ parseExpr :: Parser Expr
 parseExpr = (parseLambdaOrName <|> withParens parseExpr) `chainl1` return Ap
 
 parseLambdaOrName :: Parser Expr
-parseLambdaOrName = parseLambda <|> parseName
+parseLambdaOrName = parseLambda <|> parseName <|> parseSynonym
 
 parseLambda :: Parser Expr
 parseLambda = do
@@ -35,6 +35,9 @@ parseLambda = do
 parseName :: Parser Expr
 parseName = V <$> lexName
 
+parseSynonym :: Parser Expr
+parseSynonym = S <$> lexSynonym
+
 -- lex
 lexLambda :: Parser Char
 lexLambda = char 'λ' <|> char '\\'
@@ -47,6 +50,9 @@ lexName = oneOf ['a'..'z']
 
 lexNames :: Parser [Name]
 lexNames = many1 lexName
+
+lexSynonym :: Parser Name
+lexSynonym = oneOf $ ['A'..'Z'] ++ ['0'..'9']
 
 withParens :: Parser a -> Parser a
 withParens = between (char '(') (char ')')
