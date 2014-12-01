@@ -5,6 +5,7 @@ import           Data.Set        as Set
 import           Data.Map        as Map
 import           Lambda
 import           Test.Hspec
+import qualified Combinators
 
 specs :: Spec
 specs = describe "Lambda" $ do
@@ -75,25 +76,54 @@ specs = describe "Lambda" $ do
 
   describe "eval" $ do
     it "should .. evaluate things!" $ do
-      let combI = L 'x' (V 'x')
-      let combK = L 'x' (L 'y' (V 'x'))
-      eval (L 'x' (Ap (V 'y') (V 'x'))) `shouldBe` Right (L 'x' (Ap (V 'y') (V 'x')))
-      eval (V 'x') `shouldBe` Right (V 'x')
-      eval (Ap combI combI) `shouldBe` Right combI
-      eval (Ap (Ap combK (V 'y')) (V 'x')) `shouldBe` Right (V 'y')
-      eval (Ap (L 'y' (Ap (V 'y') (V 'x'))) combI) `shouldBe` Right (V 'x')
+      eval (L 'x' (Ap (V 'y') (V 'x'))) `shouldBe` L 'x' (Ap (V 'y') (V 'x'))
+      eval (V 'x') `shouldBe` V 'x'
+      eval (Ap Combinators.i Combinators.i) `shouldBe` Combinators.i
+      eval (Ap (Ap Combinators.k (V 'y')) (V 'x')) `shouldBe` V 'y'
 
-    it "should fail if it tries to apply a variable" $ do
-      eval (Ap (V 'x') (V 'y')) `shouldBe` Left ("cannot apply " ++ show (V 'y') ++ " to variable (" ++ show (V 'x') ++ ")")
-      eval (Ap (L 'x' (Ap (V 'y') (V 'x'))) (V 'a')) `shouldBe` Left ("cannot apply " ++ show (V 'a') ++ " to variable (" ++ show (V 'y') ++ ")")
+    it "should evaluate a returned application until no more applications exist" $
+      eval (Ap (L 'y' (Ap (V 'y') (V 'x'))) Combinators.i) `shouldBe` V 'x'
 
-  describe "evalSteps" $ do
-    it "should should show no steps in valuating to itself" $ do
-      evalSteps (L 'x' (V 'y'))`shouldBe` Right []
-      evalSteps (V 'y') `shouldBe` Right []
+    it "should evaluate resolvable applications *within* lambda bodies until resolved" $
+      eval (L 'y' (Ap (L 'x' (V 'x')) (V 'y'))) `shouldBe` L 'y' (V 'y')
 
-    it "should show evaluation steps in plain english" $ do
-      evalSteps (Ap (L 'x' (V 'x')) (V 'y')) `shouldBe` Right ["(λx.x)y == [y/x] x == y"]
-      evalSteps (Ap (Ap (L 'x' (L 'y' (V 'x'))) (V 'z')) (V 'a'))
-        `shouldBe` Right ["(λxy.x)z == [z/x] (λy.x) == (λy.z)",
-                          "(λy.z)a == [a/y] z == z"]
+    it "should stop evaluating if it tries to apply a variable" $ do
+      eval (Ap (V 'x') (V 'y')) `shouldBe` Ap (V 'x') (V 'y')
+      eval (Ap (L 'x' (Ap (V 'y') (V 'x'))) (V 'a')) `shouldBe` Ap (V 'y') (V 'a')
+
+    it "should evaluate S0 to one" $
+      eval (Ap Combinators.s Combinators.zero) `shouldBe` L 's' (L 'z' (Ap (V 's') (V 'z')))
+
+    it "should evaluate S to itself" $
+      eval Combinators.s `shouldBe` Combinators.s
+
+    it "should evaluate variable application to itself" $
+      let noopAp = Ap (V 'y') (Ap (Ap (V 'w') (V 'y')) (V 'y'))
+      in eval noopAp `shouldBe` noopAp
+
+    it "should evaluate variable application to itself" $
+      let noopAp = Ap (Ap (V 'w') (V 'y')) (V 'y')
+      in eval noopAp `shouldBe` noopAp
+
+    it "should evaluate variable application to itself" $
+      let noopAp = Ap (V 'w') (V 'y')
+      in eval noopAp `shouldBe` noopAp
+
+    it "should evaluate variable application to itself" $
+      let noopLAp = L 'y' (Ap (V 'y') (Ap (V 'w') (V 'y')))
+      in eval noopLAp `shouldBe` noopLAp
+
+    it "should evaluate variable application to itself" $
+      let noopLLAp = L 'x' (L 'y' (Ap (V 'y') (Ap (V 'w') (V 'y'))))
+      in eval noopLLAp `shouldBe` noopLLAp
+
+--   describe "evalSteps" $ do
+--     it "should should show no steps in valuating to itself" $ do
+--       evalSteps (L 'x' (V 'y'))`shouldBe` []
+--       evalSteps (V 'y') `shouldBe` []
+--
+--     it "should show evaluation steps in plain english" $ do
+--       evalSteps (Ap (L 'x' (V 'x')) (V 'y')) `shouldBe` ["(λx.x)y == [y/x] x == y"]
+--       evalSteps (Ap (Ap (L 'x' (L 'y' (V 'x'))) (V 'z')) (V 'a'))
+--         `shouldBe` ["(λxy.x)z == [z/x] (λy.x) == (λy.z)",
+--                           "(λy.z)a == [a/y] z == z"]

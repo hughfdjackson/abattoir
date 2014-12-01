@@ -11,13 +11,16 @@ module Lambda (
   boundNames
 ) where
 
+import           Control.Monad
 import           Control.Monad.Trans
 import           Control.Monad.Trans.Writer.Lazy
+import           Data.Functor ((<$>))
+import           Control.Applicative ((<*>))
 import           Data.Set as Set
 import qualified Data.Map as Map
 
-type Name = Char
 
+type Name = Char
 
 data Expr = V Name
           | L Name Expr
@@ -47,27 +50,26 @@ instance Show Entry where
     ++ show body ++ " == " ++ show result
 
 
-eval :: Expr -> Either String Expr
-eval = fmap fst . runWriterT . evalWithSteps
+eval :: Expr -> Expr
+eval = fst . runWriter. evalWithSteps
 
-evalSteps :: Expr -> Either String [String]
-evalSteps = fmap (fmap show) . execWriterT . evalWithSteps
+evalSteps :: Expr -> [String]
+evalSteps = fmap show . execWriter . evalWithSteps
 
 
 -- evals an expression, producing the result and a step-by-step list of
 -- the actions that went into it
-evalWithSteps :: Expr -> WriterT [Entry] (Either String) Expr
+evalWithSteps :: Expr -> Writer [Entry] Expr
 evalWithSteps expr = case expr of
-    (Ap v@(V _) arg)                 -> lift $ Left $ "cannot apply " ++ show arg ++ " to variable (" ++ show v ++ ")"
-    l@(L _ _)                        -> return l
-    v@(V _)                          -> return v
-    original@(Ap (L name body) arg)  -> do
-      let result = substitute name arg body
-      tell [Substitute arg name body original result]
-      evalWithSteps result
-    (Ap inner@(Ap _ _) arg)      -> do
-      evalledInner <- evalWithSteps inner
-      evalWithSteps (Ap evalledInner arg)
+    v@(V _)        -> return v
+    (L name body)  -> liftM (L name) (evalWithSteps body)
+    (Ap expr' arg) -> do
+      arg' <-  evalWithSteps arg
+      expr'' <- evalWithSteps expr'
+      case expr'' of
+        (L name body) -> evalWithSteps =<< (return (substitute name arg' body))
+        _             -> return $ Ap expr'' arg'
+
 
 substitute :: Name -> Expr -> Expr -> Expr
 substitute name arg expr = subIn cleanedExpr

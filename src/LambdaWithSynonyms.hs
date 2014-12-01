@@ -10,6 +10,8 @@ module LambdaWithSynonyms(
 ) where
 
 import Lambda (Expr(..), Name, eval, evalSteps)
+import Data.Functor ((<$>))
+import qualified Combinators
 import Data.Map as Map
 
 
@@ -58,13 +60,13 @@ emptySynonyms :: Synonyms
 emptySynonyms = Map.empty
 
 defaultSynonyms :: Synonyms
-defaultSynonyms = Map.fromList [('I', L 'x' (V 'x')),
-                                ('0', L 's' (L 'z' (V 'z'))),
-                                ('S', L 'w' (L 'y' (L 'x' (Ap (V 'y') (Ap (Ap (V 'w') (V 'y')) (V 'x'))))))]
+defaultSynonyms = Map.fromList [('I', Combinators.i),
+                                ('0', Combinators.zero),
+                                ('S', Combinators.s)]
 
 -- evaluation
 eval' :: Synonyms -> Expr' -> Either String Expr
-eval' syns expr = substituteSynonyms syns expr >>= eval
+eval' syns expr = eval <$> substituteSynonyms syns expr
 
 evalSteps' :: Synonyms -> Expr' -> Either String [String]
-evalSteps' syns expr' = substituteSynonyms syns expr' >>= evalSteps
+evalSteps' syns expr' = evalSteps <$> substituteSynonyms syns expr'
