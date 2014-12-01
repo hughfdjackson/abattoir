@@ -92,38 +92,21 @@ specs = describe "Lambda" $ do
       eval (Ap (L 'x' (Ap (V 'y') (V 'x'))) (V 'a')) `shouldBe` Ap (V 'y') (V 'a')
 
     it "should evaluate S0 to one" $
-      eval (Ap Combinators.s Combinators.zero) `shouldBe` L 's' (L 'z' (Ap (V 's') (V 'z')))
+      eval (Ap Combinators.s Combinators.zero) `shouldBe` L 'y' (L 'x' (Ap (V 'y') (V 'x')))
+
+    it "should evaluate SS0 to two" $
+      eval (Ap Combinators.s (Ap Combinators.s Combinators.zero)) `shouldBe` L 'y' (L 'x' (Ap (V 'y') (Ap (V 'y') (V 'x'))))
 
     it "should evaluate S to itself" $
       eval Combinators.s `shouldBe` Combinators.s
 
-    it "should evaluate variable application to itself" $
-      let noopAp = Ap (V 'y') (Ap (Ap (V 'w') (V 'y')) (V 'y'))
-      in eval noopAp `shouldBe` noopAp
+  describe "evalSteps" $ do
+    it "should should show no steps in valuating to itself" $ do
+      evalSteps (L 'x' (V 'y'))`shouldBe` []
+      evalSteps (V 'y') `shouldBe` []
 
-    it "should evaluate variable application to itself" $
-      let noopAp = Ap (Ap (V 'w') (V 'y')) (V 'y')
-      in eval noopAp `shouldBe` noopAp
-
-    it "should evaluate variable application to itself" $
-      let noopAp = Ap (V 'w') (V 'y')
-      in eval noopAp `shouldBe` noopAp
-
-    it "should evaluate variable application to itself" $
-      let noopLAp = L 'y' (Ap (V 'y') (Ap (V 'w') (V 'y')))
-      in eval noopLAp `shouldBe` noopLAp
-
-    it "should evaluate variable application to itself" $
-      let noopLLAp = L 'x' (L 'y' (Ap (V 'y') (Ap (V 'w') (V 'y'))))
-      in eval noopLLAp `shouldBe` noopLLAp
-
---   describe "evalSteps" $ do
---     it "should should show no steps in valuating to itself" $ do
---       evalSteps (L 'x' (V 'y'))`shouldBe` []
---       evalSteps (V 'y') `shouldBe` []
---
---     it "should show evaluation steps in plain english" $ do
---       evalSteps (Ap (L 'x' (V 'x')) (V 'y')) `shouldBe` ["(λx.x)y == [y/x] x == y"]
---       evalSteps (Ap (Ap (L 'x' (L 'y' (V 'x'))) (V 'z')) (V 'a'))
---         `shouldBe` ["(λxy.x)z == [z/x] (λy.x) == (λy.z)",
---                           "(λy.z)a == [a/y] z == z"]
+    it "should show evaluation steps in plain english" $ do
+      evalSteps (Ap (L 'x' (V 'x')) (V 'y')) `shouldBe` ["(λx.x)y == [y/x] x == y"]
+      evalSteps (Ap (Ap (L 'x' (L 'y' (V 'x'))) (V 'z')) (V 'a'))
+        `shouldBe` ["(λxy.x)z == [z/x] (λy.x) == (λy.z)",
+                          "(λy.z)a == [a/y] z == z"]

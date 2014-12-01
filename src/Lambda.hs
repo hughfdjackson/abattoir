@@ -42,35 +42,35 @@ showName :: a -> [a]
 showName n = [n]
 
 -- Evaluation
-data Entry = Substitute Expr Name Expr Expr Expr
-
-instance Show Entry where
-  show (Substitute arg name body original result) =
-       show original ++ " == " ++ "[" ++ show arg ++ "/" ++ showName name ++ "] "
-    ++ show body ++ " == " ++ show result
-
-
 eval :: Expr -> Expr
 eval = fst . runWriter. evalWithSteps
 
 evalSteps :: Expr -> [String]
-evalSteps = fmap show . execWriter . evalWithSteps
+evalSteps = execWriter . evalWithSteps
 
 
 -- evals an expression, producing the result and a step-by-step list of
 -- the actions that went into it
-evalWithSteps :: Expr -> Writer [Entry] Expr
+evalWithSteps :: Expr -> Writer [String] Expr
 evalWithSteps expr = case expr of
-    v@(V _)        -> return v
-    (L name body)  -> liftM (L name) (evalWithSteps body)
+    v@(V _)           -> return v
+    (L name body)     -> liftM (L name) (evalWithSteps body)
     (Ap expr' arg) -> do
-      arg' <-  evalWithSteps arg
+      arg'   <-  evalWithSteps arg
       expr'' <- evalWithSteps expr'
+      let updatedAp = Ap expr'' arg'
       case expr'' of
-        (L name body) -> evalWithSteps =<< (return (substitute name arg' body))
+        (L name body) -> logSubstitute updatedAp arg' name body =<< evalWithSteps =<< return (substitute name arg' body)
         _             -> return $ Ap expr'' arg'
 
+logSubstitute :: Expr -> Expr -> Name -> Expr -> Expr -> Writer [String] Expr
+logSubstitute original arg name body result = do
+  let substitutionIn = "[" ++ show arg ++ "/" ++ showName name ++ "] " ++ show body
+  tell [show original ++ " == " ++  substitutionIn ++ " == " ++ show result]
+  return result
 
+-- substitutes a name for expression e1 in expression e2.
+-- Variables in e2 are renamed to avoid conflicts
 substitute :: Name -> Expr -> Expr -> Expr
 substitute name arg expr = subIn cleanedExpr
   where subIn = straightforwardSubstitute name arg
@@ -78,6 +78,7 @@ substitute name arg expr = subIn cleanedExpr
         cleanedExpr = Prelude.foldl (flip (renameBoundWithout blacklist)) expr (toList blacklist)
 
 
+-- substitutes all variables; bound or not
 straightforwardSubstitute :: Name -> Expr -> Expr -> Expr
 straightforwardSubstitute n e l@(L x expr)    = if x /= n then L x (straightforwardSubstitute n e expr) else l
 straightforwardSubstitute n e (Ap expr expr') = Ap (straightforwardSubstitute n e expr) (straightforwardSubstitute n e expr')
