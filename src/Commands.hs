@@ -1,4 +1,4 @@
-module Commands (Commands.parse, Command(..)) where
+module Commands (Commands.parse, Command(..), commands) where
 
 import Text.Parsec as P
 import Text.Parsec.String (Parser)
@@ -8,6 +8,7 @@ import Control.Arrow (left)
 import Control.Monad (liftM)
 import Control.Applicative ((<*>))
 import Data.Functor ((<$>))
+import Data.List (sort)
 
 data Command = Eval Expr'
              | Step Expr'
@@ -18,6 +19,8 @@ data Command = Eval Expr'
              | Unrecognised String
              | ShowSynonyms
             deriving (Show, Eq)
+
+commands = sort [":help", ":quit", ":step", ":steps", ":let", ":synonyms"]
 
 parse :: String -> Either String Command
 parse = left show . P.parse parseCommand  ""

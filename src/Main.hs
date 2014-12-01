@@ -7,6 +7,7 @@ import           System.Console.Haskeline
 import           Control.Monad.Trans.State
 import           Control.Monad.Trans (lift)
 import qualified Data.Map as Map
+import           Data.List (isPrefixOf)
 
 type ReplSession = StateT Synonyms (InputT IO) ()
 
@@ -47,14 +48,24 @@ handleCommand command = do
 handleError :: String -> ReplSession
 handleError = lift . outputStrLn . ("ERROR: " ++)
 
-
 runReplStep :: StateT Synonyms (InputT IO) ()
 runReplStep = do
     minput <- lift $ getInputLine "> "
     maybe (return ()) (handleInput `fmap` Commands.parse) minput
 
+-- Completions
+completeCommand :: String -> [Completion]
+completeCommand str = map simpleCompletion $ filter (str `isPrefixOf`) commands
+
+settings :: Settings IO
+settings = Settings {
+  historyFile = Nothing,
+  complete = completeWord Nothing "\n" (return . completeCommand),
+  autoAddHistory = True
+}
+
 main :: IO ()
-main = runInputT defaultSettings (evalStateT runReplStep defaultSynonyms)
+main = runInputT settings (evalStateT runReplStep defaultSynonyms)
 
 
 

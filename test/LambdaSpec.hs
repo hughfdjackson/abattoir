@@ -109,4 +109,4 @@ specs = describe "Lambda" $ do
       evalSteps (Ap (L 'x' (V 'x')) (V 'y')) `shouldBe` ["(λx.x)y == [y/x] x == y"]
       evalSteps (Ap (Ap (L 'x' (L 'y' (V 'x'))) (V 'z')) (V 'a'))
         `shouldBe` ["(λxy.x)z == [z/x] (λy.x) == (λy.z)",
-                          "(λy.z)a == [a/y] z == z"]
+                    "(λy.z)a == [a/y] z == z"]
