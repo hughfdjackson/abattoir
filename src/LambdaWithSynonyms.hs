@@ -5,6 +5,7 @@ module LambdaWithSynonyms(
   substituteSynonyms,
   emptySynonyms,
   defaultSynonyms,
+  showSynonyms,
   eval',
   evalSteps'
 ) where
@@ -38,6 +39,10 @@ showName n = [n]
 
 -- synonyms
 type Synonyms = Map.Map Char Expr
+
+showSynonyms :: Synonyms -> String
+showSynonyms = unlines . fmap showPair . Map.toList
+  where showPair (k, e) = [k] ++ " = " ++ show e
 
 substituteSynonyms :: Synonyms -> Expr' -> Either String Expr
 substituteSynonyms syns expr = case expr of

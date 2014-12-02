@@ -2,7 +2,7 @@ module Main (main) where
 
 import           Commands
 import           Data.Functor                     ((<$>))
-import           LambdaWithSynonyms               (Synonyms, eval', evalSteps', defaultSynonyms)
+import           LambdaWithSynonyms               (Synonyms, eval', evalSteps', defaultSynonyms, showSynonyms )
 import           System.Console.Haskeline
 import           Control.Monad.Trans.State
 import           Control.Monad.Trans (lift)
@@ -30,7 +30,7 @@ handleCommand command = do
       Steps expr           -> outputResult (evalSteps' synonyms expr) >> runReplStep
       Step expr            -> outputResult (take 1 <$> evalSteps' synonyms expr) >> runReplStep
       Eval expr            -> outputResult ((:[]) . show <$> eval' synonyms expr) >> runReplStep
-      ShowSynonyms         -> (lift $ outputStrLn $ show synonyms) >> runReplStep
+      ShowSynonyms         -> (lift $ outputStrLn $ showSynonyms synonyms) >> runReplStep
       Let name expr        -> do
         let expr' = eval' synonyms expr
         case expr' of

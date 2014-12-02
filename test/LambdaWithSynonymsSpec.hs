@@ -1,10 +1,13 @@
-module LambdaWithSynonymsSpec (specs) where
+module LambdaWithSynonymsSpec (spec) where
 
 import           Data.Either     ()
 import           Test.Hspec
+import           LambdaWithSynonyms
+import           Lambda (Expr(..))
+import           Data.Map as Map
 
-specs :: Spec
-specs = describe "LambdaWithSynonyms" $ do
+spec :: Spec
+spec = describe "LambdaWithSynonyms" $ do
   describe "Expr' show" $ do
     it "should show vars" $
       show (V' 'x') `shouldBe` "x"
@@ -24,6 +27,10 @@ specs = describe "LambdaWithSynonyms" $ do
 
     it "should show symbols" $
       show (L' 'x' (L' 'y' (S' 'I'))) `shouldBe` "(λxy.I)"
+
+  describe "show synonyms" $
+    it "should show a list of synonyms" $
+      showSynonyms (Map.fromList [('X', V 'x'), ('Y', V 'y')]) `shouldBe` unlines ["X = x", "Y = y"]
 
   describe "substituteSynonyms" $ do
     it "should substitute in synonyms" $ do
