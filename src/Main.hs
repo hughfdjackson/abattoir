@@ -43,7 +43,7 @@ handleCommand command = do
         runReplStep
   where
         quit = lift $ outputStrLn "Bye"
-        help = lift $ outputStrLn "You ain't getting no help from me... yet"
+        help = lift $ outputStrLn helpText
 
 handleError :: String -> ReplSession
 handleError = lift . outputStrLn . ("ERROR: " ++)

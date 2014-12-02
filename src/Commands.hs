@@ -1,4 +1,4 @@
-module Commands (Commands.parse, Command(..), commands) where
+module Commands (Commands.parse, Command(..), commands, helpText) where
 
 import Text.Parsec as P
 import Text.Parsec.String (Parser)
@@ -21,6 +21,7 @@ data Command = Eval Expr'
             deriving (Show, Eq)
 
 commands = sort [":help", ":quit", ":step", ":steps", ":let", ":synonyms"]
+helpText = "You ain't getting no help from me... yet"
 
 parse :: String -> Either String Command
 parse = left show . P.parse parseCommand  ""
