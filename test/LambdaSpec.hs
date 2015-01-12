@@ -100,6 +100,12 @@ specs = describe "Lambda" $ do
     it "should evaluate S to itself" $
       eval Combinators.s `shouldBe` Combinators.s
 
+    it "should evaluate SKK (as in SKI lambda) to I" $ do
+      let s = L 'f' (L 'g' (L 'x' (Ap (Ap (V 'f') (V 'x')) (Ap (V 'g') (V 'x')))))
+      let k = L 'x' (L 'y' (V 'x'))
+
+      eval (Ap (Ap s k) k) `shouldBe` L 'x' (V 'x')
+
   describe "evalSteps" $ do
     it "should should show no steps in valuating to itself" $ do
       evalSteps (L 'x' (V 'y'))`shouldBe` []
